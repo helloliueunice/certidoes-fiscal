@@ -1,0 +1,6 @@
+saida/*
+!saida/.gitkeep
+__pycache__/
+.env
+*.pyc
+.pytest_cache/

@@ -1,0 +1,189 @@
+{
+  "gerado_em": "2026-10-27",
+  "arquivos": {
+    "federal_negativa.pdf": {
+      "descricao": "CND federal negativa",
+      "tipo": "federal",
+      "situacao": "negativa",
+      "cnpj": "12345678000195",
+      "validade": "2027-04-15",
+      "data_emissao": "2026-10-17",
+      "uf": null,
+      "municipio": null,
+      "codigo_controle": "1A2B.3C4D.5E6F.7A8B",
+      "avisos_contem": []
+    },
+    "federal_positiva_efeito_negativa.pdf": {
+      "descricao": "CPEN federal",
+      "tipo": "federal",
+      "situacao": "positiva_efeito_negativa",
+      "cnpj": "12345678000195",
+      "validade": "2027-04-15",
+      "data_emissao": "2026-10-17",
+      "uf": null,
+      "municipio": null,
+      "codigo_controle": "9F8E.7D6C.5B4A.3210",
+      "avisos_contem": []
+    },
+    "federal_vencida.pdf": {
+      "descricao": "CND federal vencida",
+      "tipo": "federal",
+      "situacao": "negativa",
+      "cnpj": "12345678000195",
+      "validade": "2026-10-07",
+      "data_emissao": "2026-04-10",
+      "uf": null,
+      "municipio": null,
+      "codigo_controle": null,
+      "avisos_contem": []
+    },
+    "fgts_regular.pdf": {
+      "descricao": "CRF FGTS regular",
+      "tipo": "fgts",
+      "situacao": "regular",
+      "cnpj": "12345678000195",
+      "validade": "2026-11-16",
+      "data_emissao": "2026-10-17",
+      "uf": null,
+      "municipio": null,
+      "codigo_controle": "2026101701234567890123",
+      "avisos_contem": []
+    },
+    "cndt_negativa.pdf": {
+      "descricao": "CNDT negativa",
+      "tipo": "trabalhista",
+      "situacao": "negativa",
+      "cnpj": "12345678000195",
+      "validade": "2027-04-15",
+      "data_emissao": "2026-10-17",
+      "uf": null,
+      "municipio": null,
+      "codigo_controle": "12345678/2026",
+      "avisos_contem": []
+    },
+    "cndt_positiva.pdf": {
+      "descricao": "CNDT positiva (recusada)",
+      "tipo": "trabalhista",
+      "situacao": "positiva",
+      "cnpj": "12345678000195",
+      "validade": "2027-04-15",
+      "data_emissao": "2026-10-17",
+      "uf": null,
+      "municipio": null,
+      "codigo_controle": "87654321/2026",
+      "avisos_contem": []
+    },
+    "cndt_vence_em_breve.pdf": {
+      "descricao": "CNDT negativa vencendo em 5 dias",
+      "tipo": "trabalhista",
+      "situacao": "negativa",
+      "cnpj": "12345678000195",
+      "validade": "2026-11-01",
+      "data_emissao": "2026-05-05",
+      "uf": null,
+      "municipio": null,
+      "codigo_controle": null,
+      "avisos_contem": []
+    },
+    "estadual_sp_pge.pdf": {
+      "descricao": "PGE-SP débitos inscritos em dívida ativa",
+      "tipo": "estadual",
+      "situacao": "negativa",
+      "cnpj": "12345678000195",
+      "validade": "2027-04-15",
+      "data_emissao": "2026-10-17",
+      "uf": "SP",
+      "municipio": null,
+      "codigo_controle": null,
+      "avisos_contem": []
+    },
+    "estadual_sp_sefaz.pdf": {
+      "descricao": "SEFAZ-SP débitos não inscritos",
+      "tipo": "estadual",
+      "situacao": "negativa",
+      "cnpj": "12345678000195",
+      "validade": "2026-12-16",
+      "data_emissao": "2026-10-17",
+      "uf": "SP",
+      "municipio": null,
+      "codigo_controle": null,
+      "avisos_contem": []
+    },
+    "estadual_rj.pdf": {
+      "descricao": "Estadual genérica (RJ), datas por extenso",
+      "tipo": "estadual",
+      "situacao": "negativa",
+      "cnpj": "12345678000195",
+      "validade": "2027-01-15",
+      "data_emissao": "2026-10-17",
+      "uf": "RJ",
+      "municipio": null,
+      "codigo_controle": null,
+      "avisos_contem": []
+    },
+    "municipal_sp.pdf": {
+      "descricao": "Prefeitura de SP, validade por prazo",
+      "tipo": "municipal",
+      "situacao": "negativa",
+      "cnpj": "12345678000195",
+      "validade": "2027-04-15",
+      "data_emissao": "2026-10-17",
+      "uf": "SP",
+      "municipio": "São Paulo",
+      "codigo_controle": null,
+      "avisos_contem": []
+    },
+    "sicaf.pdf": {
+      "descricao": "Declaração SICAF sem pendência",
+      "tipo": "sicaf",
+      "situacao": "regular",
+      "cnpj": "12345678000195",
+      "validade": "2026-12-06",
+      "data_emissao": "2026-10-26",
+      "uf": null,
+      "municipio": null,
+      "codigo_controle": null,
+      "avisos_contem": []
+    },
+    "cnpj_divergente.pdf": {
+      "descricao": "CND federal de OUTRA empresa",
+      "tipo": "federal",
+      "situacao": "negativa",
+      "cnpj": "98765432000198",
+      "validade": "2027-04-15",
+      "data_emissao": "2026-10-17",
+      "uf": null,
+      "municipio": null,
+      "codigo_controle": null,
+      "avisos_contem": []
+    },
+    "escaneado.pdf": {
+      "descricao": "Somente imagem, sem texto",
+      "tipo": "desconhecida",
+      "situacao": "indeterminada",
+      "cnpj": null,
+      "validade": null,
+      "data_emissao": null,
+      "uf": null,
+      "municipio": null,
+      "codigo_controle": null,
+      "avisos_contem": [
+        "PDF sem texto"
+      ]
+    },
+    "duas_certidoes.pdf": {
+      "descricao": "CNDT + federal no mesmo arquivo",
+      "tipo": "trabalhista",
+      "situacao": "negativa",
+      "cnpj": "12345678000195",
+      "validade": "2027-04-15",
+      "data_emissao": "2026-10-17",
+      "uf": null,
+      "municipio": null,
+      "codigo_controle": null,
+      "avisos_contem": [
+        "mais de uma certidão"
+      ]
+    }
+  }
+}

@@ -1,0 +1,12 @@
+AMOSTRAS SINTÉTICAS - DOCUMENTO DE TESTE - SEM VALIDADE
+
+Os PDFs desta pasta são FICTÍCIOS, gerados por tests/gerar_amostras.py apenas para testes
+automatizados do extrator. Não são certidões reais e não têm qualquer validade jurídica.
+
+- Empresa fictícia: EMPRESA EXEMPLO DE SERVIÇOS LTDA (CNPJ 12.345.678/0001-95, DV calculado; dado inventado)
+- Outra empresa fictícia: OUTRA EMPRESA FICTÍCIA COMÉRCIO LTDA (CNPJ 98.765.432/0001-98)
+- As datas são relativas ao dia da geração (date.today()); regenere para atualizar.
+- Os códigos de controle são inventados e NÃO devem ser consultados nos portais.
+- esperado.json traz, por arquivo, o resultado que o extrator deve produzir.
+
+Regenerar:  python tests/gerar_amostras.py
