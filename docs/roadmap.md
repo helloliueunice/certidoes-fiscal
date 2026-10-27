@@ -14,7 +14,7 @@ Linha de base a medir na Fase 0. A hipótese inicial é de 20 a 40 minutos por c
 - Levantamento das cláusulas contratuais vigentes sobre a comprovação de regularidade.
 - Verificação da elegibilidade do órgão ao Conecta gov.br.
 
-**Indicadores:** tempo médio por contrato (linha de base); % de certidões entregues pela contratada sem cobrança; % de contratadas cadastradas no SICAF.
+**Indicadores:** tempo médio por contrato (linha de base); captchas por contratada/mês (linha de base); % de certidões entregues pela contratada sem cobrança; % de contratadas cadastradas no SICAF.
 
 ## Fase 1 — Ganho rápido (1 mês)
 **Entregáveis**
@@ -24,6 +24,27 @@ Linha de base a medir na Fase 0. A hipótese inicial é de 20 a 40 minutos por c
 - Catálogo de portais oficiais (`data/portais.json`) disponível aos fiscais.
 
 **Indicadores:** % de NFs recebidas com o conjunto completo de certidões; redução do tempo por contrato (meta indicativa: -40%).
+
+## Fase 1-A — Redução de captchas (em paralelo à Fase 1, de 1 a 3 meses)
+Guia do fiscal: `docs/estrategia_captcha.md`. **Nenhuma medida contorna captcha.**
+
+**Entregáveis**
+- SICAF como primeira consulta, aceitando os itens "Automática" para federal, FGTS e CNDT (cláusula `docs/clausula_contratual.md`, itens [__].3.1 e [__].3.2).
+- Rotina de conferência só do que é novo ou vence: validar a autenticidade uma vez por documento e, nos meses seguintes, conferir apenas a data de validade.
+- Ofício às contratadas (`docs/oficio_contratadas.md`) para o envio das certidões que vencem antes do próximo pagamento.
+- Ofícios aos emissores (`docs/oficio_orgaos_emissores.md`): Caixa, TST/CSJT, SEFAZ das UFs de sede e Secretarias de Fazenda dos municípios que concentram mais contratadas. Registrar as respostas.
+- Adesão ao Conecta gov.br (antecipa parte da Fase 3).
+- Mutirão mensal em data fixa, com os portais agrupados.
+
+**Indicadores**
+| Indicador | Antes (linha de base) | Depois (meta indicativa) |
+|---|---|---|
+| **Captchas por contratada/mês** | [__] (estimativa: 5; 6 em UF com 2 certidões estaduais) | ≤ 2 no SICAF; ≤ 3,5 fora do SICAF |
+| % de contratadas com nível III "Automática" válido no SICAF | [__]% | [__]% |
+| % de certidões que vencem antes do pagamento e chegam com a NF | [__]% | ≥ 90% |
+| Ofícios aos emissores respondidos / com canal oficial disponível | — | [__] / [__] |
+
+*Como medir:* na Fase 0 e em cada ciclo mensal, o fiscal anota o número de captchas resolvidos por contratada. A estimativa e as premissas estão em `docs/estrategia_captcha.md`, seção 3.
 
 ## Fase 2 — MVP do validador (1 a 2 meses)
 **Entregáveis**
@@ -60,6 +81,7 @@ Linha de base a medir na Fase 0. A hipótese inicial é de 20 a 40 minutos por c
 | Indicador | Antes (linha de base) | Depois (meta indicativa) |
 |---|---|---|
 | Tempo por contrato/mês para certidões | [__] min | redução ≥ 70% |
+| Captchas por contratada/mês | [__] | ≤ 2 no SICAF; ≤ 3,5 fora do SICAF |
 | NFs com certidões completas no recebimento | [__]% | ≥ 90% |
 | Atestos devolvidos por falta ou erro de certidão | [__] | redução ≥ 50% |
 | Satisfação dos fiscais (pesquisa) | — | ≥ 4/5 |

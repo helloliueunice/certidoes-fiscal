@@ -49,12 +49,57 @@
   }
   if (cnpj) { cnpj.addEventListener("input", atualizarCnpj); atualizarCnpj(); }
 
+  // ---------- Conecta: o formulário (POST) do PDF leva o CNPJ digitado na seção 1
+  const formCnd = $("#form-cnd"), cndCnpj = $("#cnd-cnpj");
+  function atualizarCnd() { if (cndCnpj && cnpj) cndCnpj.value = digitos(cnpj.value); }
+  if (formCnd && cnpj) {
+    cnpj.addEventListener("input", atualizarCnd);
+    formCnd.addEventListener("submit", atualizarCnd);
+    atualizarCnd();
+  }
+
+  // ---------- br-upload sem o JS do DS: o botão abre o seletor de arquivos
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest(".br-upload .upload-button");
+    if (!b) return;
+    const i = b.closest(".br-upload").querySelector("input[type=file]");
+    if (i) i.click();
+  });
+
+  // ---------- botões que abrem um <details> (ex.: texto de solicitação)
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-abrir]");
+    if (!b) return;
+    const alvo = document.getElementById(b.dataset.abrir);
+    if (!alvo) return;
+    e.preventDefault();
+    alvo.open = true;
+    alvo.scrollIntoView({ behavior: "smooth", block: "start" });
+    const s = alvo.querySelector("summary"); if (s) s.focus();
+  });
+
   document.addEventListener("click", (e) => {
     const b = e.target.closest("[data-copiar]");
     if (!b) return;
-    const texto = document.getElementById(b.dataset.copiar).textContent;
-    const fim = () => { const o = b.innerHTML; b.innerHTML = '<i class="fas fa-check" aria-hidden="true"></i>Copiado'; setTimeout(() => (b.innerHTML = o), 1500); };
-    if (navigator.clipboard) navigator.clipboard.writeText(texto).then(fim, fim); else fim();
+    const origem = document.getElementById(b.dataset.copiar);
+    if (!origem) return;
+    const texto = origem.textContent;
+    const aviso = (ok) => {
+      if (b.dataset.copiando) return;
+      const o = b.innerHTML; b.dataset.copiando = "1";
+      b.innerHTML = ok ? '<i class="fas fa-check" aria-hidden="true"></i>Copiado'
+        : '<i class="fas fa-times" aria-hidden="true"></i>Selecione e copie manualmente';
+      setTimeout(() => { b.innerHTML = o; delete b.dataset.copiando; }, 1800);
+    };
+    const alternativa = () => {   // navegadores sem a API de área de transferência (http)
+      const t = document.createElement("textarea");
+      t.value = texto; t.setAttribute("readonly", ""); t.style.position = "fixed"; t.style.opacity = "0";
+      document.body.appendChild(t); t.select();
+      let ok = false; try { ok = document.execCommand("copy"); } catch (err) { ok = false; }
+      document.body.removeChild(t); aviso(ok);
+    };
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(texto).then(() => aviso(true), alternativa);
+    else alternativa();
   });
 
   // ---------- Portais
@@ -73,7 +118,8 @@
     }
     lista.innerHTML = '<p class="text-down-01 m-0 p-2">Carregando portais…</p>';
     try {
-      const q = new URLSearchParams({ uf, municipio: mun, tipos: tiposMarcados() });
+      const sicaf = $("#aceitar_sicaf");
+      const q = new URLSearchParams({ uf, municipio: mun, tipos: tiposMarcados(), sicaf: sicaf && sicaf.checked ? "1" : "" });
       const r = await fetch("/api/portais?" + q);
       const { portais } = await r.json();
       if (!portais.length) { lista.innerHTML = '<p class="text-down-01 m-0 p-2">Nenhum portal cadastrado.</p>'; return; }
@@ -85,9 +131,13 @@
         const botao = p.url
           ? `<a class="br-button secondary small" href="${esc(p.url)}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt" aria-hidden="true"></i>Abrir portal</a>`
           : "";
-        return `<div class="br-item" role="listitem">
+        const destaque = p.destaque
+          ? '<span class="br-tag success small"><i class="fas fa-star" aria-hidden="true"></i> comece por aqui</span>' : "";
+        const dica = p.destaque
+          ? '<div class="portal-obs mt-half"><strong>Uma consulta no SICAF cobre federal, FGTS e trabalhista.</strong> Só abra os portais de cada certidão se o SICAF não as mostrar como válidas.</div>' : "";
+        return `<div class="br-item${p.destaque ? " portal-destaque" : ""}" role="listitem">
           <div class="portal-info"><div class="portal-nome">${esc(p.nome)}</div>
-          <div class="mt-half"><span class="br-tag small">${esc(p.rotulo)}</span>${captcha}${conferir}</div>
+          <div class="mt-half">${destaque}<span class="br-tag small">${esc(p.rotulo)}</span>${captcha}${conferir}</div>${dica}
           ${p.observacao ? `<div class="portal-obs mt-half">${esc(p.observacao)}</div>` : ""}</div>${botao}</div>
           <span class="br-divider"></span>`;
       }).join("");
@@ -97,7 +147,7 @@
   }
   const agendar = () => { clearTimeout(timer); timer = setTimeout(carregarPortais, 400); };
   ["#uf", "#municipio"].forEach((s) => { const el = $(s); if (el) el.addEventListener(s === "#uf" ? "change" : "input", agendar); });
-  document.querySelectorAll('input[name="exigidas"]').forEach((i) => i.addEventListener("change", agendar));
+  document.querySelectorAll('input[name="exigidas"], #aceitar_sicaf').forEach((i) => i.addEventListener("change", agendar));
   carregarPortais();
 
   // ---------- Conecta

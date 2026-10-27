@@ -11,7 +11,8 @@
       "uf": null,
       "municipio": null,
       "codigo_controle": "1A2B.3C4D.5E6F.7A8B",
-      "avisos_contem": []
+      "avisos_contem": [],
+      "cobertura": null
     },
     "federal_positiva_efeito_negativa.pdf": {
       "descricao": "CPEN federal",
@@ -23,7 +24,8 @@
       "uf": null,
       "municipio": null,
       "codigo_controle": "9F8E.7D6C.5B4A.3210",
-      "avisos_contem": []
+      "avisos_contem": [],
+      "cobertura": null
     },
     "federal_vencida.pdf": {
       "descricao": "CND federal vencida",
@@ -35,7 +37,8 @@
       "uf": null,
       "municipio": null,
       "codigo_controle": null,
-      "avisos_contem": []
+      "avisos_contem": [],
+      "cobertura": null
     },
     "fgts_regular.pdf": {
       "descricao": "CRF FGTS regular",
@@ -47,7 +50,8 @@
       "uf": null,
       "municipio": null,
       "codigo_controle": "2026101701234567890123",
-      "avisos_contem": []
+      "avisos_contem": [],
+      "cobertura": null
     },
     "cndt_negativa.pdf": {
       "descricao": "CNDT negativa",
@@ -59,7 +63,8 @@
       "uf": null,
       "municipio": null,
       "codigo_controle": "12345678/2026",
-      "avisos_contem": []
+      "avisos_contem": [],
+      "cobertura": null
     },
     "cndt_positiva.pdf": {
       "descricao": "CNDT positiva (recusada)",
@@ -71,7 +76,8 @@
       "uf": null,
       "municipio": null,
       "codigo_controle": "87654321/2026",
-      "avisos_contem": []
+      "avisos_contem": [],
+      "cobertura": null
     },
     "cndt_vence_em_breve.pdf": {
       "descricao": "CNDT negativa vencendo em 5 dias",
@@ -83,7 +89,8 @@
       "uf": null,
       "municipio": null,
       "codigo_controle": null,
-      "avisos_contem": []
+      "avisos_contem": [],
+      "cobertura": null
     },
     "estadual_sp_pge.pdf": {
       "descricao": "PGE-SP débitos inscritos em dívida ativa",
@@ -95,7 +102,8 @@
       "uf": "SP",
       "municipio": null,
       "codigo_controle": null,
-      "avisos_contem": []
+      "avisos_contem": [],
+      "cobertura": null
     },
     "estadual_sp_sefaz.pdf": {
       "descricao": "SEFAZ-SP débitos não inscritos",
@@ -107,7 +115,8 @@
       "uf": "SP",
       "municipio": null,
       "codigo_controle": null,
-      "avisos_contem": []
+      "avisos_contem": [],
+      "cobertura": null
     },
     "estadual_rj.pdf": {
       "descricao": "Estadual genérica (RJ), datas por extenso",
@@ -119,7 +128,8 @@
       "uf": "RJ",
       "municipio": null,
       "codigo_controle": null,
-      "avisos_contem": []
+      "avisos_contem": [],
+      "cobertura": null
     },
     "municipal_sp.pdf": {
       "descricao": "Prefeitura de SP, validade por prazo",
@@ -131,10 +141,11 @@
       "uf": "SP",
       "municipio": "São Paulo",
       "codigo_controle": null,
-      "avisos_contem": []
+      "avisos_contem": [],
+      "cobertura": null
     },
     "sicaf.pdf": {
-      "descricao": "Declaração SICAF sem pendência",
+      "descricao": "Declaração SICAF sem pendência (5 itens, estadual inserida manualmente)",
       "tipo": "sicaf",
       "situacao": "regular",
       "cnpj": "12345678000195",
@@ -143,7 +154,123 @@
       "uf": null,
       "municipio": null,
       "codigo_controle": null,
-      "avisos_contem": []
+      "avisos_contem": [],
+      "cobertura": {
+        "federal": {
+          "validade": "2027-02-24",
+          "automatica": true,
+          "pendencia": false
+        },
+        "fgts": {
+          "validade": "2026-12-06",
+          "automatica": true,
+          "pendencia": false
+        },
+        "trabalhista": {
+          "validade": "2027-03-26",
+          "automatica": true,
+          "pendencia": false
+        },
+        "estadual": {
+          "validade": "2027-01-25",
+          "automatica": false,
+          "pendencia": false
+        },
+        "municipal": {
+          "validade": "2026-12-26",
+          "automatica": false,
+          "pendencia": false
+        },
+        "_situacao": {
+          "credenciado": true,
+          "situacao": "Credenciado",
+          "impedimento": null
+        }
+      }
+    },
+    "sicaf_pendencia.pdf": {
+      "descricao": "Declaração SICAF com pendência no nível IV (municipal vencida), datas soltas",
+      "tipo": "sicaf",
+      "situacao": "indeterminada",
+      "cnpj": "12345678000195",
+      "validade": "2026-10-22",
+      "data_emissao": "2026-10-26",
+      "uf": null,
+      "municipio": null,
+      "codigo_controle": null,
+      "avisos_contem": [
+        "pendência"
+      ],
+      "cobertura": {
+        "federal": {
+          "validade": "2027-02-04",
+          "automatica": true,
+          "pendencia": false
+        },
+        "fgts": {
+          "validade": "2026-11-21",
+          "automatica": true,
+          "pendencia": false
+        },
+        "trabalhista": {
+          "validade": "2027-03-06",
+          "automatica": true,
+          "pendencia": false
+        },
+        "estadual": {
+          "validade": "2026-11-26",
+          "automatica": true,
+          "pendencia": true
+        },
+        "municipal": {
+          "validade": "2026-10-22",
+          "automatica": true,
+          "pendencia": true
+        },
+        "_situacao": {
+          "credenciado": true,
+          "situacao": "Credenciado",
+          "impedimento": null
+        }
+      }
+    },
+    "sicaf_descredenciado.pdf": {
+      "descricao": "Declaração SICAF: fornecedor descredenciado, com impedimento e pendência no nível III informada após os itens",
+      "tipo": "sicaf",
+      "situacao": "indeterminada",
+      "cnpj": "12345678000195",
+      "validade": "2026-12-16",
+      "data_emissao": "2026-10-27",
+      "uf": null,
+      "municipio": null,
+      "codigo_controle": null,
+      "avisos_contem": [
+        "Descredenciado",
+        "Impedimento de Licitar",
+        "pendência"
+      ],
+      "cobertura": {
+        "federal": {
+          "validade": "2027-01-25",
+          "automatica": true,
+          "pendencia": true
+        },
+        "fgts": {
+          "validade": "2026-12-16",
+          "automatica": true,
+          "pendencia": true
+        },
+        "trabalhista": {
+          "validade": "2027-02-24",
+          "automatica": true,
+          "pendencia": true
+        },
+        "_situacao": {
+          "credenciado": false,
+          "situacao": "Descredenciado",
+          "impedimento": "Impedimento de Licitar: Consta - Suspensão temporária (art. 156, III, Lei 14.133/2021)"
+        }
+      }
     },
     "cnpj_divergente.pdf": {
       "descricao": "CND federal de OUTRA empresa",
@@ -155,7 +282,8 @@
       "uf": null,
       "municipio": null,
       "codigo_controle": null,
-      "avisos_contem": []
+      "avisos_contem": [],
+      "cobertura": null
     },
     "escaneado.pdf": {
       "descricao": "Somente imagem, sem texto",
@@ -169,7 +297,8 @@
       "codigo_controle": null,
       "avisos_contem": [
         "PDF sem texto"
-      ]
+      ],
+      "cobertura": null
     },
     "duas_certidoes.pdf": {
       "descricao": "CNDT + federal no mesmo arquivo",
@@ -183,7 +312,8 @@
       "codigo_controle": null,
       "avisos_contem": [
         "mais de uma certidão"
-      ]
+      ],
+      "cobertura": null
     }
   }
 }

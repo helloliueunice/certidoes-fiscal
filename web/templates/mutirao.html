@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block titulo %}Planejar emissão do mês — {{ NOME_SISTEMA }}{% endblock %}
+{% block conteudo %}
+{% set TAG_SITUACAO = {
+  "sem_validade": ("danger", "fa-times-circle", "sem certidão"),
+  "vencida": ("danger", "fa-times-circle", "vencida"),
+  "pendente": ("danger", "fa-times-circle", "pendente"),
+  "vence_antes": ("warning", "fa-exclamation-triangle", "vence antes do corte"),
+  "valida": ("success", "fa-check-circle", "válida"),
+  "reconferir": ("warning", "fa-search", "reconferir"),
+} %}
+<nav class="br-breadcrumb mb-3" aria-label="Breadcrumbs">
+  <ol class="crumb-list" role="list">
+    <li class="crumb home"><a class="br-button circle" href="/"><span class="sr-only">Página inicial</span><i class="fas fa-home"></i></a></li>
+    <li class="crumb" data-active="active"><i class="icon fas fa-chevron-right"></i><span tabindex="0" aria-current="page">Planejar emissão do mês</span></li>
+  </ol>
+</nav>
+
+<h1 class="h2 mt-0">Planejar a emissão do mês</h1>
+<p class="text-up-01 mb-3">Envie as planilhas de controle (CSV) das conferências anteriores. O sistema mostra, para cada contratada,
+  o que ainda está válido na data de corte e o que precisa ser emitido — para você resolver o mínimo de captchas, numa só sessão.</p>
+
+<div class="br-message info" role="note">
+  <div class="icon"><i class="fas fa-lightbulb fa-lg" aria-hidden="true"></i></div>
+  <div class="content">
+    <span class="message-title">Estratégia para resolver menos captchas</span>
+    <ol class="message-body estrategia mb-0">
+      <li><strong>Peça à contratada.</strong> A contratada deve manter a regularidade durante todo o contrato (Lei nº 14.133/2021, art. 92, XVI) e, quando o contrato prever, enviar as certidões com a nota fiscal. Use o texto de solicitação de cada contratada.</li>
+      <li><strong>Use o SICAF.</strong> Uma consulta feita por você no {% if URL_SICAF %}<a href="{{ URL_SICAF }}" target="_blank" rel="noopener">SICAF (Compras.gov.br)</a>{% else %}SICAF (Compras.gov.br){% endif %}, na data do atesto, cobre federal, FGTS e trabalhista
+        nos itens marcados "Automática". A declaração enviada pela contratada não serve ("simples consulta"); itens "Manual" foram inseridos pelo fornecedor e precisam ser conferidos no emissor.</li>
+      <li><strong>Emita só o que vence</strong> até a data de corte. O que ainda está válido fica para depois.</li>
+      <li><strong>Faça tudo numa sessão:</strong> CNPJ copiado, portais abertos em sequência, marque cada item como feito.</li>
+    </ol>
+    <span class="message-body d-block mt-1">O sistema não contorna captcha: nos portais com captcha, é você quem resolve.</span>
+  </div>
+</div>
+
+{% if erros %}
+<div class="br-message danger" role="alert">
+  <div class="icon"><i class="fas fa-times-circle fa-lg" aria-hidden="true"></i></div>
+  <div class="content">
+    <span class="message-title">Corrija os itens abaixo.</span>
+    <ul class="message-body mb-0">{% for e in erros %}<li>{{ e }}</li>{% endfor %}</ul>
+  </div>
+</div>
+{% endif %}
+
+<form id="form-mutirao" method="post" action="/mutirao" enctype="multipart/form-data" novalidate>
+  <section class="secao" aria-labelledby="t-planilhas">
+    <h2 class="h4 secao-titulo" id="t-planilhas"><span class="numero">1</span>Planilhas de controle e data de corte</h2>
+    <div class="br-upload" id="upload-csv">
+      <label class="upload-label" for="csvs"><span>Planilhas de controle (CSV) baixadas na página de resultado — uma ou várias</span></label>
+      <input class="upload-input" id="csvs" name="csvs" type="file" multiple accept=".csv,text/csv" aria-label="Enviar planilhas de controle em CSV">
+      <button class="upload-button" type="button" aria-controls="csvs"><i class="fas fa-upload" aria-hidden="true"></i><span>Selecione as planilhas (CSV) ou arraste-as para cá</span></button>
+      <div class="upload-list" id="csvs-lista"></div>
+    </div>
+    <p class="text-down-01 mt-1">Nada fica guardado: as planilhas são lidas e o plano é montado só nesta página.</p>
+
+    <div class="row mt-3">
+      <div class="col-md-3 mb-3"><div class="br-input">
+        <label for="ate">Data de corte</label>
+        <input id="ate" name="ate" type="date" value="{{ v.ate }}" required aria-describedby="ate-ajuda">
+        <span class="text-down-01 d-block mt-half" id="ate-ajuda">Precisa estar válida até esta data.</span>
+      </div></div>
+      <div class="col-md-6 mb-3"><div class="br-input">
+        <label for="orgao">Órgão (vai no texto de solicitação)</label>
+        <input id="orgao" name="orgao" type="text" value="{{ v.orgao }}" placeholder="Ex.: Secretaria de Administração">
+      </div></div>
+      <div class="col-md-3 mb-3"><div class="br-input">
+        <label for="prazo">Prazo para a contratada (dias úteis)</label>
+        <input id="prazo" name="prazo" type="number" min="1" max="60" value="{{ v.prazo }}">
+      </div></div>
+    </div>
+    <div class="br-checkbox">
+      <input id="aceitar_sicaf" name="aceitar_sicaf" type="checkbox" value="1" {% if v.aceitar_sicaf %}checked{% endif %} aria-describedby="sicaf-ajuda">
+      <label for="aceitar_sicaf">Aceitar o SICAF para federal, FGTS e trabalhista de todas as contratadas</label>
+    </div>
+    <p class="text-down-01 mt-1 ajuda-checkbox" id="sicaf-ajuda">Mesmo desmarcado, o SICAF é sugerido para quem já foi comprovada por ele na planilha.
+      A declaração deve ser obtida <strong>por você, fiscal, no {% if URL_SICAF %}<a href="{{ URL_SICAF }}" target="_blank" rel="noopener">SICAF (Compras.gov.br)</a>{% else %}SICAF (Compras.gov.br){% endif %}, na data do atesto</strong>.
+      A declaração enviada pela contratada não serve: é "simples consulta". Só os itens marcados <strong>"Automática"</strong> vêm direto do emissor
+      (evitam os captchas da Receita, da Caixa e do TST); os marcados <strong>"Manual"</strong> foram inseridos pelo fornecedor e precisam ser conferidos no site do emissor.</p>
+
+    <div class="d-flex justify-content-end mt-3">
+      <button class="br-button primary" type="submit" id="btn-planejar"><i class="fas fa-tasks" aria-hidden="true"></i>Planejar o mutirão</button>
+    </div>
+  </section>
+</form>
+
+{% if grupos is not none %}
+<section aria-labelledby="t-plano" id="plano" data-corte="{{ data_corte.isoformat() }}">
+  <div class="d-flex flex-wrap align-items-start justify-content-between">
+    <h2 class="h3 mt-0 mb-2" id="t-plano">Plano até {{ formatar_data(data_corte) }}</h2>
+    <div class="d-flex flex-wrap acoes">
+      {% if plano_json %}
+      <form method="post" action="/mutirao/plano.csv" class="d-inline">
+        <input type="hidden" name="plano" value="{{ plano_json }}">
+        <input type="hidden" name="ate" value="{{ data_corte.isoformat() }}">
+        <button class="br-button primary mr-2 mb-2" type="submit"><i class="fas fa-file-csv" aria-hidden="true"></i>Baixar lista do mutirão (CSV)</button>
+      </form>
+      {% endif %}
+      <button class="br-button tertiary mb-2" type="button" id="limpar-feitos"><i class="fas fa-eraser" aria-hidden="true"></i>Limpar marcações</button>
+    </div>
+  </div>
+
+  <div class="resumo resumo-mutirao mb-3" aria-label="Resumo do mutirão">
+    <div class="br-card cartao"><div class="card-content">
+      <span class="num">{{ totais.contratadas }}</span><span class="rot"><i class="fas fa-building" aria-hidden="true"></i> Contratadas</span></div></div>
+    <div class="br-card cartao success"><div class="card-content">
+      <span class="num">{{ totais.ok }}</span><span class="rot"><i class="fas fa-check-circle" aria-hidden="true"></i> Ainda válidas</span></div></div>
+    <div class="br-card cartao danger"><div class="card-content">
+      <span class="num">{{ totais.a_emitir }}</span><span class="rot"><i class="fas fa-file-signature" aria-hidden="true"></i> A emitir</span></div></div>
+    <div class="br-card cartao warning"><div class="card-content">
+      <span class="num">{{ totais.a_reconferir }}</span><span class="rot"><i class="fas fa-search" aria-hidden="true"></i> A reconferir</span></div></div>
+    <div class="br-card cartao info"><div class="card-content">
+      <span class="num">{{ totais.via_sicaf }}</span><span class="rot"><i class="fas fa-id-card" aria-hidden="true"></i> Via SICAF</span></div></div>
+    <div class="br-card cartao success destaque"><div class="card-content">
+      <span class="num">{{ totais.captchas_evitados }}</span><span class="rot"><i class="fas fa-unlock" aria-hidden="true"></i> Captchas evitados</span></div></div>
+  </div>
+  <p class="text-down-01 mb-3">Captchas evitados = certidões ainda válidas + itens comprovados pelo SICAF.
+    Estimativa de captchas a resolver hoje: <strong>{{ totais.captchas_a_resolver }}</strong>.</p>
+
+  {% set total_acoes = totais.a_emitir + totais.via_sicaf + totais.a_reconferir %}
+  <div class="progresso mb-4" aria-live="polite">
+    <div class="d-flex justify-content-between text-down-01 mb-half">
+      <span class="text-medium">Progresso do mutirão</span>
+      <span id="progresso-texto">0 de {{ total_acoes }} feitos</span>
+    </div>
+    <div class="barra" role="progressbar" aria-label="Progresso do mutirão" aria-valuemin="0" aria-valuemax="{{ total_acoes }}" aria-valuenow="0" id="progresso-barra">
+      <span></span>
+    </div>
+  </div>
+
+  {% if total_acoes %}
+  <div class="br-message warning" role="note">
+    <div class="icon"><i class="fas fa-lock fa-lg" aria-hidden="true"></i></div>
+    <div class="content"><span class="message-title">Portais com captcha são acessados por você.</span>
+      <span class="message-body"> O botão "Abrir portal" só abre o site oficial em outra aba. Depois de emitir, confira a autenticidade pelo código de controle e envie os PDFs na <a href="/">conferência</a>.</span></div>
+  </div>
+  {% endif %}
+
+  {% for g in grupos %}
+  {% set acoes = g.a_emitir + g.consultar_sicaf + g.reconferir %}
+  <article class="br-card grupo-mutirao" aria-labelledby="{{ g.dom_id }}-t">
+    <div class="card-header">
+      <div class="d-flex flex-wrap align-items-start justify-content-between">
+        <div class="grupo-id">
+          <h3 class="h5 mt-0 mb-1" id="{{ g.dom_id }}-t">{{ g.razao_social or "Contratada sem razão social" }}</h3>
+          <p class="text-down-01 mb-1">Contrato <strong>{{ g.contrato or "—" }}</strong>{% if g.municipio_sede %} · Sede {{ g.municipio_sede }}/{{ g.uf_sede }}{% endif %}{% if g.data_referencia %} · Última conferência {{ formatar_data(g.data_referencia) }}{% endif %}</p>
+          <div class="d-flex flex-wrap align-items-center">
+            <span class="text-down-01 text-medium mr-1">CNPJ</span>
+            <span class="br-tag mr-1" id="{{ g.dom_id }}-cnpj">{{ g.cnpj_formatado }}</span>
+            <button class="br-button small secondary" type="button" data-copiar="{{ g.dom_id }}-cnpj"><i class="fas fa-copy" aria-hidden="true"></i>Copiar</button>
+          </div>
+        </div>
+        <div class="grupo-contagem text-down-01">
+          {% if g.a_emitir %}<span class="br-tag danger status-tag mb-1">{{ g.a_emitir|length }} a emitir</span>{% endif %}
+          {% if g.consultar_sicaf %}<span class="br-tag info status-tag mb-1">{{ g.consultar_sicaf|length }} via SICAF</span>{% endif %}
+          {% if g.reconferir %}<span class="br-tag warning status-tag mb-1">{{ g.reconferir|length }} a reconferir</span>{% endif %}
+          {% if not acoes %}<span class="br-tag success status-tag mb-1"><i class="fas fa-check-circle" aria-hidden="true"></i>em dia</span>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card-content">
+      {% if acoes %}
+      <div class="br-list lista-plano" role="list">
+        {% for i in acoes %}
+        {% set tag = TAG_SITUACAO[i.situacao_plano] %}
+        {% set cid = g.dom_id ~ "-" ~ i.tipo %}
+        <div class="br-item item-plano" role="listitem">
+          <div class="br-checkbox item-feito">
+            <input id="{{ cid }}" type="checkbox" class="feito" data-chave="{{ g.cnpj }}|{{ g.contrato }}|{{ i.tipo }}|{{ data_corte.isoformat() }}">
+            <label for="{{ cid }}">Feito<span class="sr-only"> — {{ i.rotulo }}</span></label>
+          </div>
+          <div class="item-info">
+            <div class="item-nome">{{ i.rotulo }}</div>
+            <div class="mt-half">
+              <span class="br-tag {{ tag[0] }} small status-tag"><i class="fas {{ tag[1] }}" aria-hidden="true"></i><span>{{ tag[2] }}</span></span>
+              {% if i.acao == "consultar SICAF" %}<span class="br-tag info small status-tag"><i class="fas fa-id-card" aria-hidden="true"></i><span>consultar SICAF</span></span>{% endif %}
+            </div>
+            <div class="text-down-01 mt-half">Validade registrada: <strong>{{ i.validade_txt or "—" }}</strong> · {{ i.motivo }}</div>
+          </div>
+          <div class="item-portais">
+            {% for p in i.portais %}
+            <div class="portal-linha">
+              {% if i.portais|length > 1 %}<div class="portal-obs">{{ p.nome }}</div>{% endif %}
+              {% if p.url %}
+              <a class="br-button secondary small" href="{{ p.url }}" target="_blank" rel="noopener" title="{{ p.nome }}"><i class="fas fa-external-link-alt" aria-hidden="true"></i>{{ "Abrir SICAF" if i.acao == "consultar SICAF" else "Abrir portal" }}{% if i.portais|length > 1 %} {{ loop.index }}{% endif %}<span class="sr-only"> — {{ p.nome }} (abre em nova aba)</span></a>
+              {% else %}
+              <span class="text-down-01">{{ p.nome }}</span>
+              {% endif %}
+              {% if p.captcha is sameas true %}<span class="br-tag warning small"><i class="fas fa-lock" aria-hidden="true"></i> com captcha</span>{% elif p.captcha is sameas false %}<span class="br-tag small">sem captcha</span>{% endif %}
+              {% if p.url_verificacao %}<a class="br-button tertiary small" href="{{ p.url_verificacao }}" target="_blank" rel="noopener"><i class="fas fa-shield-alt" aria-hidden="true"></i>Verificar autenticidade</a>{% endif %}
+            </div>
+            {% else %}
+            <span class="text-down-01">Portal não catalogado — use o site do emissor.</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="mb-0"><i class="fas fa-check-circle text-success mr-1" aria-hidden="true"></i>Nada a emitir até {{ formatar_data(data_corte) }}.</p>
+      {% endif %}
+
+      {% if g.ok %}
+      <details class="detalhe validas mt-2">
+        <summary><span class="title">{{ g.ok|length }} {{ "certidão ainda válida" if g.ok|length == 1 else "certidões ainda válidas" }} na data de corte</span></summary>
+        <div class="content">
+          <ul class="lista-validas">
+            {% for i in g.ok %}<li><span class="br-tag success small status-tag"><i class="fas fa-check-circle" aria-hidden="true"></i><span>válida</span></span> {{ i.rotulo }} — até {{ i.validade_txt }}{% if i.via_sicaf %} (SICAF){% endif %}</li>{% endfor %}
+          </ul>
+        </div>
+      </details>
+      {% endif %}
+    </div>
+
+    {% if g.a_emitir %}
+    <div class="card-footer">
+      <div class="d-flex flex-wrap">
+        <button class="br-button primary small mr-2 mb-2" type="button" data-copiar="{{ g.dom_id }}-texto"><i class="fas fa-copy" aria-hidden="true"></i>Copiar texto de solicitação à contratada</button>
+        <a class="br-button secondary small mr-2 mb-2" href="{{ g.mailto.href }}"><i class="fas fa-envelope" aria-hidden="true"></i>Abrir no e-mail</a>
+      </div>
+      {% if g.mailto.curto %}<p class="feedback warning d-flex text-down-01 mb-2" role="status"><i class="fas fa-exclamation-triangle mr-1" aria-hidden="true"></i>Texto longo: o e-mail abre só com o assunto. Copie o texto antes e cole-o no e-mail.</p>{% endif %}
+      <details class="detalhe texto-solicitacao">
+        <summary><span class="title">Ver o texto (minuta)</span></summary>
+        <div class="content"><pre class="texto-minuta" id="{{ g.dom_id }}-texto">{{ g.solicitacao }}</pre></div>
+      </details>
+    </div>
+    {% endif %}
+  </article>
+  {% endfor %}
+
+  <p class="text-down-01 mt-4">As marcações de "feito" ficam só neste navegador. O plano é um apoio: a conferência das certidões e o atesto continuam sendo feitos pelo fiscal.</p>
+</section>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="/static/app.js"></script><script src="/static/mutirao.js"></script>{% endblock %}

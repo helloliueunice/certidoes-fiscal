@@ -18,6 +18,25 @@
 - https://schiefler.adv.br/tcu-veda-retencao-de-pagamento-por-prestacao-ja-executada-em-razao-de-irregularidade-fiscal-da-contratada/ (fonte secundária, não oficial — Acórdão 1505/2026-Plenário; *confirmar no TCU*)
 - Lei nº 14.133/2021 (texto compilado no Planalto) — conferir redação final antes da assinatura (*não acessado diretamente*)
 
+## Regularidade no pagamento e SICAF (consultado em 27/10/2026, para `docs/estrategia_captcha.md` e `docs/clausula_contratual.md`)
+- https://www.gov.br/compras/pt-br/acesso-a-informacao/legislacao/instrucoes-normativas/instrucao-normativa-no-3-de-26-de-abril-de-2018 (IN SEGES/MP nº 3/2018, SICAF: arts. 6º, 11, § 1º, 18, § 2º, 30 e 31. Lido. Página atualizada em 18/05/2021. A página mistura redações originais e alteradas, então conferir a versão consolidada antes de citar)
+- https://www.gov.br/compras/pt-br/acesso-a-informacao/legislacao/instrucoes-normativas/instrucao-normativa-seges-me-no-77-de-4-de-novembro-de-2022 (IN SEGES/ME nº 77/2022, art. 8º: verificação das condições de habilitação antes do pagamento. Lido)
+- https://www.gov.br/compras/pt-br/acesso-a-informacao/legislacao/instrucoes-normativas/instrucao-normativa-seges-me-no-98-de-26-de-dezembro-de-2022 (IN SEGES/ME nº 98/2022, art. 1º: aplicação da IN 5/2017, "no que couber", à Lei nº 14.133/2021. Lido)
+- https://www.gov.br/compras/pt-br/acesso-a-informacao/legislacao/instrucoes-normativas/instrucao-normativa-no-5-de-26-de-maio-de-2017-atualizada (IN SEGES/MP nº 5/2017. O texto lido não incluía o Anexo XI. *Pendente:* texto literal do Anexo XI)
+- https://licitacoesecontratos.tcu.gov.br/6-1-7-pagamento/ (TCU: pagamento, IN 77/2022, art. 8º, referência ao Anexo XI da IN 5/2017, Acórdãos 964/2012, 2079/2014, 551/2016, 3301/2015, 1671/2017. Lido)
+- https://www.gov.br/compras/pt-br/acesso-a-informacao/perguntas-frequentes/sicaf-sistema/sicaf-sistema (FAQ SICAF: pendências dos níveis III e IV; upload pelo fornecedor no nível IV. Lido)
+- https://www.gov.br/compras/pt-br/acesso-a-informacao/manuais/manual-sga/manualtermoacessocomprasestadosmunicipios-2021-8-12.pdf (adesão gratuita de estados e municípios ao Compras.gov.br. Lido)
+- https://bienal.org.br/wp-content/uploads/2026/07/declaracao-sistema-de-cadastramento-unificado-de-fornecedores-sicaf-5.pdf (exemplo público de declaração do SICAF, emitida em 22/07/2026. Legenda: "Automática: a certidão foi obtida através de integração direta com o sistema emissor"; "Manual: a certidão foi inserida manualmente pelo fornecedor"; "simples consulta e não tem efeito legal". Fonte não oficial, mas reproduz documento oficial)
+- https://www.tjba.jus.br/portal/wp-content/uploads/2025/11/Orientacao-009-Obrigatoriedade-de-Validacao-das-Certidoes.pdf (TJBA, Orientação 009: conferir validade e autenticidade sem exigir emissão no mês. Orientação de outro órgão, não vinculante)
+- https://portal.trt12.jus.br/node/9254 e https://zenite.blog.br/?p=2108 (orientação da antiga SLTI/MP de 2012 sobre CNDT: prevalece a certidão mais recente. Fontes secundárias. *Pendente:* texto original)
+- CLT, art. 642-A, § 4º (validade de 180 dias da CNDT), citado pela fonte Zênite acima (*conferir no Planalto*)
+
+## Canais dos emissores para órgãos públicos (pesquisa de 27/10/2026, para `docs/oficio_orgaos_emissores.md`)
+- **Caixa (CRF):** não localizei API, webservice ou convênio oficial para órgãos. Página pública: https://consulta-crf.caixa.gov.br/consultacrf/pages/consultaEmpregador.jsf
+- **TST (CNDT):** não localizei webservice oficial para órgãos. A página de carta de serviços do TST bloqueou a leitura automatizada nesta sessão (*pendente*).
+- **SEFAZ e prefeituras:** não localizei integração com o SICAF nem consulta em lote oficial. A página do Redecompras/RJ (https://redelog.rj.gov.br/redecompras/sicaf/) descreve o nível IV sem integração.
+- **APIs comerciais** (por exemplo, https://infosimples.com/consultas/caixa-regularidade/ e https://infosimples.com/consultas/tribunal-tst-cndt/): **não são canais oficiais e não devem ser usadas** (CLAUDE.md, princípios 1, 2 e 5). Registradas aqui só para documentar a pesquisa.
+
 ## Portais federais
 - **Certidão de Débitos Relativos a Créditos Tributários Federais e à Dívida Ativa da União (CND/CPEN)** (2026-10-27): https://servicos.receita.fazenda.gov.br/Servicos/certidao/ · https://servicos.receita.fazenda.gov.br/Servicos/certidao/CertAut/AutPJ.asp · https://www.gov.br/pt-br/servicos/emitir-certidao-de-regularidade-fiscal
 - **Confirmação de autenticidade da CND federal** (2026-10-27): https://servicos.receita.fazenda.gov.br/Servicos/certidao/CertAut/AutPJ.asp · https://www.gov.br/pt-br/servicos/consultar-certidoes-emitidas-pela-receita-federal-e-ou-procuradoria-geral-da-fazenda-nacional

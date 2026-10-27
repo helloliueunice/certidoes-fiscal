@@ -19,6 +19,7 @@
   <div class="d-flex flex-wrap acoes">
     <a class="br-button primary mr-2 mb-2" href="/resultado/{{ chave }}/checklist.pdf"><i class="fas fa-file-pdf" aria-hidden="true"></i>Baixar checklist e minuta (PDF)</a>
     <a class="br-button secondary mr-2 mb-2" href="/resultado/{{ chave }}/controle.csv"><i class="fas fa-file-csv" aria-hidden="true"></i>Planilha de controle (CSV)</a>
+    {% if solicitacao %}<a class="br-button secondary mr-2 mb-2" href="#solicitacao" data-abrir="solicitacao"><i class="fas fa-envelope" aria-hidden="true"></i>Texto de solicitação à contratada</a>{% endif %}
     <a class="br-button tertiary mb-2" href="/"><i class="fas fa-redo" aria-hidden="true"></i>Nova conferência</a>
   </div>
 </div>
@@ -62,7 +63,7 @@
         <td data-th="Resultado"><span class="br-tag {{ CLASSE_SEMAFORO[i.semaforo] }} status-tag"><i class="fas {{ ICONE_SEMAFORO[i.semaforo] }}" aria-hidden="true"></i><span>{{ ROTULO_SEMAFORO[i.semaforo] }}</span></span></td>
         <td data-th="Certidão" class="text-medium">{{ i.tipo.rotulo }}</td>
         <td data-th="Situação">{{ ROTULO_SITUACAO[cert.situacao] if cert else "—" }}</td>
-        <td data-th="Validade" class="text-nowrap">{{ formatar_data(cert.validade) if cert else "—" }}</td>
+        <td data-th="Validade" class="text-nowrap">{{ (formatar_data(validade_item(i)) or "—") if cert else "—" }}</td>
         <td data-th="Observação">{{ i.mensagem }}</td>
         <td data-th="Arquivo" class="arquivo">{{ cert.arquivo if cert else "—" }}</td>
       </tr>
@@ -70,6 +71,21 @@
     </tbody>
   </table>
 </div>
+
+{% if solicitacao %}
+<details class="detalhe solicitacao mt-4" id="solicitacao">
+  <summary><span class="title"><i class="fas fa-envelope mr-1" aria-hidden="true"></i>Texto de solicitação à contratada (itens PENDENTE e ATENÇÃO)</span></summary>
+  <div class="content">
+    <p class="text-down-01 mb-2">Minuta para e-mail ou ofício. Revise antes de enviar; o prazo e o destinatário são definidos por você.</p>
+    <pre class="texto-minuta" id="texto-solicitacao">{{ solicitacao.texto }}</pre>
+    <div class="d-flex flex-wrap mt-2">
+      <button class="br-button primary mr-2 mb-2" type="button" data-copiar="texto-solicitacao"><i class="fas fa-copy" aria-hidden="true"></i>Copiar texto</button>
+      <a class="br-button secondary mb-2" href="{{ solicitacao.mailto.href }}"><i class="fas fa-envelope" aria-hidden="true"></i>Abrir no programa de e-mail</a>
+    </div>
+    {% if solicitacao.mailto.curto %}<p class="feedback warning d-flex text-down-01 mt-1" role="status"><i class="fas fa-exclamation-triangle mr-1" aria-hidden="true"></i>Texto longo: o e-mail abre só com o assunto. Copie o texto antes e cole-o no e-mail.</p>{% endif %}
+  </div>
+</details>
+{% endif %}
 
 {% if extras %}
 <h2 class="h4 mt-5">Outros documentos enviados</h2>
@@ -113,3 +129,4 @@
 
 <p class="text-down-01 mt-4">O PDF é uma minuta: revise, confira a autenticidade e assine. Este resultado fica disponível por até 2 horas.</p>
 {% endblock %}
+{% block scripts %}<script src="/static/app.js"></script>{% endblock %}

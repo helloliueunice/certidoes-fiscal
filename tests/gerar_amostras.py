@@ -197,6 +197,10 @@ class Amostra:
     codigo_controle: Optional[str] = None
     avisos_contem: list[str] = field(default_factory=list)
     descricao: str = ""
+    # Só SICAF: tipo -> (validade, automatica, pendencia)
+    cobertura: Optional[dict[str, tuple[Optional[date], bool, bool]]] = None
+    # Só SICAF: cobertura_sicaf["_situacao"] esperado
+    sicaf_situacao: Optional[dict] = None
 
 
 def amostras(hoje: Optional[date] = None) -> list[Amostra]:
@@ -348,10 +352,55 @@ def amostras(hoje: Optional[date] = None) -> list[Amostra]:
             "Código de autenticidade: SP0011223344",
         ]]))
 
-    val_sicaf = h + timedelta(days=40)
+    # Declaração SICAF: nível III (federal, FGTS, trabalhista) e nível IV (estadual, municipal).
+    v_fed, v_fgts, v_trab = h + timedelta(days=120), h + timedelta(days=40), h + timedelta(days=150)
+    v_est, v_mun = h + timedelta(days=90), h + timedelta(days=60)
+    emis_sicaf = h - timedelta(days=1)
     lista.append(Amostra(
-        "sicaf", "sicaf", "regular", CNPJ_EMPRESA, val_sicaf, data_emissao=h - timedelta(days=1),
-        descricao="Declaração SICAF sem pendência",
+        "sicaf", "sicaf", "regular", CNPJ_EMPRESA, v_fgts, data_emissao=emis_sicaf,
+        descricao="Declaração SICAF sem pendência (5 itens, estadual inserida manualmente)",
+        sicaf_situacao={"credenciado": True, "situacao": "Credenciado", "impedimento": None},
+        cobertura={
+            "federal": (v_fed, True, False), "fgts": (v_fgts, True, False),
+            "trabalhista": (v_trab, True, False), "estadual": (v_est, False, False),
+            "municipal": (v_mun, False, False),
+        },
+        paginas=[[
+            "Ministério da Gestão e da Inovação em Serviços Públicos",
+            "# Sistema de Cadastramento Unificado de Fornecedores - SICAF",
+            "Declaração",
+            "Declaramos para os fins previstos na Lei nº 14.133, de 2021, conforme documentação "
+            "registrada no SICAF, que a situação do fornecedor no momento é a seguinte:",
+            f"CNPJ: {fmt_cnpj(CNPJ_EMPRESA)}",
+            f"Razão Social: {EMPRESA}",
+            "Situação do Fornecedor: Credenciado",
+            "Ocorrências e Impedimentos: Nada consta",
+            "I - Credenciamento",
+            "II - Habilitação Jurídica",
+            "III - Regularidade Fiscal e Trabalhista Federal",
+            "Receita Federal e PGFN Validade:",
+            f"{br(v_fed)} Automática",
+            f"FGTS Validade: {br(v_fgts)} Automática",
+            f"Trabalhista Validade: {br(v_trab)} Automática(http://www.tst.jus.br/certidao)",
+            "IV - Regularidade Fiscal Estadual/Distrital e Municipal",
+            f"Receita Estadual/Distrital Validade: {br(v_est)} Manual",
+            f"Receita Municipal Validade: {br(v_mun)} (*)",
+            "(*) Certidão inserida pelo fornecedor.",
+            f"Emitido em: {br(emis_sicaf)} 10:15",
+        ]]))
+
+    vp_fed, vp_fgts, vp_trab = h + timedelta(days=100), h + timedelta(days=25), h + timedelta(days=130)
+    vp_est, vp_mun = h + timedelta(days=30), h - timedelta(days=5)
+    lista.append(Amostra(
+        "sicaf_pendencia", "sicaf", "indeterminada", CNPJ_EMPRESA, vp_mun, data_emissao=emis_sicaf,
+        avisos_contem=["pendência"],
+        descricao="Declaração SICAF com pendência no nível IV (municipal vencida), datas soltas",
+        sicaf_situacao={"credenciado": True, "situacao": "Credenciado", "impedimento": None},
+        cobertura={
+            "federal": (vp_fed, True, False), "fgts": (vp_fgts, True, False),
+            "trabalhista": (vp_trab, True, False), "estadual": (vp_est, True, True),
+            "municipal": (vp_mun, True, True),
+        },
         paginas=[[
             "Ministério da Gestão e da Inovação em Serviços Públicos",
             "# Sistema de Cadastramento Unificado de Fornecedores - SICAF",
@@ -359,12 +408,51 @@ def amostras(hoje: Optional[date] = None) -> list[Amostra]:
             f"CNPJ: {fmt_cnpj(CNPJ_EMPRESA)}",
             f"Razão Social: {EMPRESA}",
             "Situação do Fornecedor: Credenciado",
-            "Ocorrências e Impedimentos: Nada consta",
-            "Níveis cadastrados:",
-            f"Receita Federal e PGFN - Validade: {br(h + timedelta(days=120))}",
-            f"FGTS - Validade: {br(val_sicaf)}",
-            f"Trabalhista - Validade: {br(h + timedelta(days=150))}",
-            f"Data de emissão: {br(h - timedelta(days=1))}",
+            "III - Regularidade Fiscal e Trabalhista Federal",
+            f"Receita Federal e PGFN {br(vp_fed)} Automática",
+            "Validade:",
+            f"FGTS {br(vp_fgts)} Automática",
+            "Validade:",
+            f"Trabalhista {br(vp_trab)} Automática(http://www.tst.jus.br/certidao)",
+            "Validade:",
+            "IV - Regularidade Fiscal Estadual/Distrital e Municipal: (Possui Pendência)",
+            f"Receita Estadual/Distrital {br(vp_est)} Automática",
+            "Validade:",
+            f"Receita Municipal {br(vp_mun)} Automática",
+            "Validade:",
+            f"Emitido em: {br(emis_sicaf)} 10:15",
+        ]]))
+
+    vd_fed, vd_fgts, vd_trab = h + timedelta(days=90), h + timedelta(days=50), h + timedelta(days=120)
+    imped = "Impedimento de Licitar: Consta - Suspensão temporária (art. 156, III, Lei 14.133/2021)"
+    lista.append(Amostra(
+        "sicaf_descredenciado", "sicaf", "indeterminada", CNPJ_EMPRESA, vd_fgts, data_emissao=h,
+        avisos_contem=["Descredenciado", "Impedimento de Licitar", "pendência"],
+        descricao="Declaração SICAF: fornecedor descredenciado, com impedimento e pendência no nível III "
+                  "informada após os itens",
+        cobertura={
+            "federal": (vd_fed, True, True), "fgts": (vd_fgts, True, True),
+            "trabalhista": (vd_trab, True, True),
+        },
+        sicaf_situacao={"credenciado": False, "situacao": "Descredenciado", "impedimento": imped},
+        paginas=[[
+            "Ministério da Gestão e da Inovação em Serviços Públicos",
+            "# Sistema de Cadastramento Unificado de Fornecedores - SICAF",
+            "Declaração",
+            f"CNPJ: {fmt_cnpj(CNPJ_EMPRESA)}",
+            f"Razão Social: {EMPRESA}",
+            "Situação do Fornecedor: Descredenciado",
+            "Ocorrência: Nada Consta",
+            imped,
+            "Ocorrências Impeditivas indiretas: Nada Consta",
+            "III - Regularidade Fiscal e Trabalhista Federal",
+            f"Receita Federal e PGFN Validade: {br(vd_fed)} Automática",
+            f"FGTS Validade: {br(vd_fgts)} Automática",
+            f"Trabalhista Validade: {br(vd_trab)} Automática(http://www.tst.jus.br/certidao)",
+            "Situação do nível: Possui Pendência",
+            "IV - Regularidade Fiscal Estadual/Distrital e Municipal",
+            "Nenhum registro encontrado",
+            f"Emitido em: {br(h)} 14:32",
         ]]))
 
     lista.append(Amostra(
@@ -429,6 +517,11 @@ def gerar(destino: str | Path | None = None, hoje: Optional[date] = None) -> dic
             "municipio": a.municipio,
             "codigo_controle": a.codigo_controle,
             "avisos_contem": a.avisos_contem,
+            "cobertura": None if a.cobertura is None else {
+                **{k: {"validade": v.isoformat() if v else None, "automatica": aut, "pendencia": pen}
+                   for k, (v, aut, pen) in a.cobertura.items()},
+                **({"_situacao": a.sicaf_situacao} if a.sicaf_situacao is not None else {}),
+            },
         }
     (pasta / "esperado.json").write_text(
         json.dumps({"gerado_em": (hoje or date.today()).isoformat(), "arquivos": esperado},

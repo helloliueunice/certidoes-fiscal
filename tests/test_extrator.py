@@ -55,6 +55,11 @@ def test_amostra_confere_com_esperado(amostras, nome):
     if e["tipo"] != "desconhecida" and not e["avisos_contem"]:
         assert c.confianca >= 0.9
         assert c.texto
+    cob = {k: (v if k.startswith("_") else
+               {"validade": v["validade"].isoformat() if v["validade"] else None,
+                "automatica": v["automatica"], "pendencia": v["pendencia"]})
+           for k, v in c.cobertura_sicaf.items()}
+    assert cob == (e["cobertura"] or {})
 
 
 def test_marca_de_teste_no_texto(amostras):
@@ -327,3 +332,196 @@ def test_validade_de_n_dias_a_contar_de_data():
     c = ler_texto("PREFEITURA MUNICIPAL DE CAMPINAS - SP\nCertidão negativa de débitos\n"
                   f"CNPJ: {CNPJ}\nCertidão com validade de 180 dias a contar de 01/10/2026.")
     assert c.validade == date(2026, 10, 1) + timedelta(days=180)
+
+
+# ---------------------------------------------------------------- SICAF: cobertura por nível
+
+_SICAF_CAB = ("Sistema de Cadastramento Unificado de Fornecedores - SICAF\nDeclaração\n"
+              f"CNPJ: {gerar_amostras.fmt_cnpj(CNPJ)}\nRazão Social: EMPRESA EXEMPLO\n"
+              "Situação do Fornecedor: Credenciado\n")
+
+
+def _cob(c, tipo):
+    return c.cobertura_sicaf[tipo]
+
+
+def test_sicaf_formato_real_niveis_iii_e_iv():
+    t = _SICAF_CAB + (
+        "III - Regularidade Fiscal e Trabalhista Federal\n"
+        "Receita Federal e PGFN Validade: 02/02/2025 Automática\n"
+        "FGTS Validade: 13/11/2024 Automática\n"
+        "Trabalhista Validade: 22/04/2025 Automática(http://www.tst.jus.br/certidao)\n"
+        "IV - Regularidade Fiscal Estadual/Distrital e Municipal\n"
+        "Receita Estadual/Distrital Validade: 13/07/2024\n"
+        "Receita Municipal Validade: 15/03/2024 (*)\n"
+        "Emitido em: 01/07/2024 09:00")
+    c = ler_texto(t, "sicaf.pdf")
+    assert c.tipo == TipoCertidao.SICAF
+    assert c.situacao == Situacao.REGULAR
+    assert _cob(c, "federal") == {"validade": date(2025, 2, 2), "automatica": True, "pendencia": False}
+    assert _cob(c, "fgts")["validade"] == date(2024, 11, 13)
+    assert _cob(c, "trabalhista") == {"validade": date(2025, 4, 22), "automatica": True, "pendencia": False}
+    assert _cob(c, "estadual") == {"validade": date(2024, 7, 13), "automatica": False, "pendencia": False}
+    assert _cob(c, "municipal") == {"validade": date(2024, 3, 15), "automatica": False, "pendencia": False}
+    assert c.validade == date(2024, 3, 15)          # a mais próxima entre os itens
+    assert c.data_emissao == date(2024, 7, 1)
+
+
+def test_sicaf_datas_soltas_e_validade_deslocada():
+    t = _SICAF_CAB + (
+        "III - Regularidade Fiscal e Trabalhista Federal\n"
+        "Receita Federal e PGFN 26/07/2024 Automática\n"
+        "FGTS 13/11/2024 Manual\n"
+        "Trabalhista 22/04/2025 Automática\n"
+        "Validade:\nValidade:\nValidade:\n"
+        "IV - Regularidade Fiscal Estadual/Distrital e Municipal\nNenhum registro encontrado\n")
+    c = ler_texto(t)
+    assert {k for k in c.cobertura_sicaf if not k.startswith("_")} == {"federal", "fgts", "trabalhista"}
+    assert _cob(c, "federal")["validade"] == date(2024, 7, 26)
+    assert _cob(c, "fgts") == {"validade": date(2024, 11, 13), "automatica": False, "pendencia": False}
+    assert _cob(c, "trabalhista")["validade"] == date(2025, 4, 22)
+
+
+def test_sicaf_data_na_linha_seguinte():
+    t = _SICAF_CAB + (
+        "III - Regularidade Fiscal e Trabalhista Federal\n"
+        "Receita Federal e PGFN Validade:\n02/02/2025 Automática\n"
+        "FGTS\nValidade: 13/11/2024\nAutomática\n"
+        "Trabalhista Validade: 22/04/2025 Automática\n")
+    c = ler_texto(t)
+    assert _cob(c, "federal") == {"validade": date(2025, 2, 2), "automatica": True, "pendencia": False}
+    assert _cob(c, "fgts") == {"validade": date(2024, 11, 13), "automatica": True, "pendencia": False}
+
+
+def test_sicaf_colunas_rotulos_antes_das_datas():
+    t = _SICAF_CAB + (
+        "III - Regularidade Fiscal e Trabalhista Federal\n"
+        "Receita Federal e PGFN\nFGTS\nTrabalhista\n"
+        "Validade: 02/02/2025 Automática\nValidade: 13/11/2024 Manual\nValidade: 22/04/2025 Automática\n")
+    c = ler_texto(t)
+    assert _cob(c, "federal")["validade"] == date(2025, 2, 2)
+    assert _cob(c, "fgts") == {"validade": date(2024, 11, 13), "automatica": False, "pendencia": False}
+    assert _cob(c, "trabalhista")["validade"] == date(2025, 4, 22)
+
+
+def test_sicaf_pendencia_marca_so_o_nivel():
+    t = _SICAF_CAB + (
+        "III - Regularidade Fiscal e Trabalhista Federal (Possui Pendência)\n"
+        "Receita Federal e PGFN Validade: 02/02/2025 Automática\n"
+        "FGTS Validade: 13/11/2024 Automática\n"
+        "Trabalhista Validade: 22/04/2025 Automática\n"
+        "IV - Regularidade Fiscal Estadual/Distrital e Municipal\n"
+        "Receita Estadual/Distrital Validade: 13/07/2024 Automática\n")
+    c = ler_texto(t)
+    assert all(_cob(c, k)["pendencia"] for k in ("federal", "fgts", "trabalhista"))
+    assert _cob(c, "estadual")["pendencia"] is False
+    assert c.situacao == Situacao.INDETERMINADA
+    assert any("pendência" in a for a in c.avisos)
+
+
+def test_sicaf_sem_niveis_formato_antigo():
+    t = _SICAF_CAB + ("Receita Federal e PGFN - Validade: 02/02/2027\n"
+                      "FGTS - Validade: 13/11/2026\n")
+    c = ler_texto(t)
+    assert _cob(c, "federal") == {"validade": date(2027, 2, 2), "automatica": False, "pendencia": False}
+    assert c.validade == date(2026, 11, 13)
+
+
+def test_nao_sicaf_sem_cobertura():
+    c = ler_texto(f"CERTIDÃO NEGATIVA DE DÉBITOS TRABALHISTAS\nCNPJ: {CNPJ}\nFGTS Validade: 10/12/2026")
+    assert c.cobertura_sicaf == {}
+
+
+def test_sicaf_com_cobertura_nao_chama_ia(amostras, monkeypatch):
+    pasta, _ = amostras
+    monkeypatch.setattr(ia, "habilitada", lambda: True)
+    def _falha(*a, **k):
+        raise AssertionError("IA não deveria ser chamada")
+    monkeypatch.setattr(ia, "extrair_com_ia", _falha)
+    c = ler_pdf(pasta / "sicaf_pendencia.pdf")
+    assert c.metodo == "regras" and c.cobertura_sicaf
+
+
+def test_sicaf_pendencia_nao_derruba_confianca(amostras):
+    pasta, _ = amostras
+    c = ler_pdf(pasta / "sicaf_pendencia.pdf")
+    assert c.confianca >= 0.9
+    assert not any("anterior à emissão" in a for a in c.avisos)
+
+
+# ---------------------------------------------------------------- SICAF: revisão independente
+
+def _tipos(c):
+    return {k for k in c.cobertura_sicaf if not k.startswith("_")}
+
+
+def test_sicaf_pendencia_depois_dos_itens_do_nivel():
+    t = _SICAF_CAB + (
+        "III - Regularidade Fiscal e Trabalhista Federal\n"
+        "Receita Federal e PGFN Validade: 02/02/2027 Automática\n"
+        "FGTS Validade: 13/11/2026 Automática\n"
+        "Trabalhista Validade: 22/04/2027 Automática\n"
+        "Situação do nível: Possui Pendência\n"
+        "IV - Regularidade Fiscal Estadual/Distrital e Municipal\n"
+        "Receita Estadual/Distrital Validade: 13/07/2027 Automática\n")
+    c = ler_texto(t)
+    assert all(_cob(c, k)["pendencia"] for k in ("federal", "fgts", "trabalhista"))
+    assert _cob(c, "estadual")["pendencia"] is False
+    assert any("nível III" in a for a in c.avisos)
+
+
+def test_sicaf_nao_possui_pendencia_nao_marca():
+    t = _SICAF_CAB + ("III - Regularidade Fiscal e Trabalhista Federal\n"
+                      "FGTS Validade: 13/11/2026 Automática\nSituação do nível: Não possui pendência\n")
+    c = ler_texto(t)
+    assert _cob(c, "fgts")["pendencia"] is False
+    assert c.situacao == Situacao.REGULAR
+
+
+def test_sicaf_emitido_em_com_hora():
+    c = ler_texto(_SICAF_CAB + "III - Regularidade Fiscal e Trabalhista Federal\n"
+                  "FGTS Validade: 13/11/2026 Automática\nEmitido em: 27/10/2026 14:32\n")
+    assert c.data_emissao == date(2026, 10, 27)
+
+
+def test_sicaf_situacao_credenciado_nada_consta():
+    t = _SICAF_CAB + ("Ocorrência: Nada Consta\nImpedimento de Licitar: Nada Consta\n"
+                      "Ocorrências Impeditivas indiretas: Nada Consta\n"
+                      "III - Regularidade Fiscal e Trabalhista Federal\nFGTS Validade: 13/11/2026 Automática\n")
+    t = t.replace("Declaração\n", "Declaração\nDeclaramos que a situação do fornecedor no momento é a seguinte:\n")
+    c = ler_texto(t)
+    assert c.cobertura_sicaf["_situacao"] == {"credenciado": True, "situacao": "Credenciado",
+                                              "impedimento": None}
+    assert not any("SICAF: fornecedor" in a for a in c.avisos)
+
+
+def test_sicaf_descredenciado_e_impedimento_geram_aviso():
+    t = ("Sistema de Cadastramento Unificado de Fornecedores - SICAF\n"
+         f"CNPJ: {CNPJ}\nSituação do Fornecedor: Descredenciado\n"
+         "Ocorrências Impeditivas indiretas: Consta (sócio com impedimento)\n"
+         "III - Regularidade Fiscal e Trabalhista Federal\nFGTS Validade: 13/11/2026 Automática\n")
+    c = ler_texto(t)
+    sit = c.cobertura_sicaf["_situacao"]
+    assert sit["credenciado"] is False and sit["situacao"] == "Descredenciado"
+    assert sit["impedimento"] == "Ocorrências Impeditivas indiretas: Consta (sócio com impedimento)"
+    assert "SICAF: fornecedor Descredenciado" in c.avisos
+    assert any("Ocorrências Impeditivas indiretas: Consta" in a for a in c.avisos)
+    assert _tipos(c) == {"fgts"}
+
+
+def test_sicaf_situacao_ausente():
+    t = ("Sistema de Cadastramento Unificado de Fornecedores - SICAF\n"
+         f"CNPJ: {CNPJ}\nIII - Regularidade Fiscal e Trabalhista Federal\nFGTS Validade: 13/11/2026 Automática\n")
+    c = ler_texto(t)
+    assert c.cobertura_sicaf["_situacao"]["credenciado"] is False
+    assert c.cobertura_sicaf["_situacao"]["situacao"] is None
+    assert any("situação do fornecedor não identificada" in a for a in c.avisos)
+
+
+def test_sicaf_sem_itens_so_situacao_ainda_chama_regra_de_ia(monkeypatch):
+    # só "_situacao" não conta como cobertura lida: confiança e IA tratam como antes
+    t = ("Sistema de Cadastramento Unificado de Fornecedores - SICAF\n"
+         f"CNPJ: {CNPJ}\nSituação do Fornecedor: Credenciado\nPossui Pendência\n")
+    c = ler_texto(t)
+    assert _tipos(c) == set()
+    assert extrator._precisa_ia(c) is True

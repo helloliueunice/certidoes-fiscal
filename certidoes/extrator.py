@@ -673,20 +673,167 @@ def _regra_municipal(t: _Texto, c: Certidao) -> None:
         c.avisos.append("Município da certidão não identificado")
 
 
+# Declaração SICAF: nível III = Regularidade Fiscal e Trabalhista Federal;
+# nível IV = Regularidade Fiscal Estadual/Distrital e Municipal.
+_RE_NIVEL_SICAF = re.compile(r"(?m)^(?:NIVEL\s+)?(VI|V|IV|III|II|I)\s*-\s*(?=[A-Z])")
+_ITENS_SICAF: dict[str, tuple[str, re.Pattern]] = {
+    "federal": ("III", re.compile(r"(?m)^RECEITA FEDERAL(?: E PGFN)?\b")),
+    "fgts": ("III", re.compile(r"(?m)^FGTS\b")),
+    "trabalhista": ("III", re.compile(r"(?m)^TRABALHISTA\b")),
+    "estadual": ("IV", re.compile(r"(?m)^RECEITA ESTADUAL(?:/DISTRITAL)?\b")),
+    "municipal": ("IV", re.compile(r"(?m)^RECEITA MUNICIPAL\b")),
+}
+_RE_PENDENCIA_NIVEL = re.compile(r"(?<!NAO )POSSUI PENDENCIA|\bCOM PENDENCIA")
+_RE_NEG_PENDENCIA = re.compile(r"(?:NAO POSSUI|SEM|NENHUMA|INEXISTENCIA DE|NAO HA) PENDENCIAS?")
+
+
+def _fim_linha(f: str, pos: int, extra: int = 0) -> int:
+    """Fim da linha que contém ``pos`` (mais ``extra`` linhas seguintes)."""
+    for _ in range(extra + 1):
+        q = f.find("\n", pos)
+        if q < 0:
+            return len(f)
+        pos = q + 1
+    return pos - 1
+
+
+def _automatica(trecho: str) -> bool:
+    """'Automática' = obtida pelo SICAF junto ao emissor; 'Manual' ou nada = inserida pelo fornecedor."""
+    return "AUTOMATICA" in trecho and "MANUAL" not in trecho
+
+
+def _cobertura_sicaf(t: _Texto, pendencia_global: bool) -> tuple[dict[str, dict], list[str]]:
+    """Lê os itens dos níveis III e IV. Devolve (cobertura, níveis com pendência)."""
+    f = t.linhas
+    niveis = list(_RE_NIVEL_SICAF.finditer(f))
+    vaos: dict[str, tuple[int, int]] = {}
+    for i, m in enumerate(niveis):
+        nome = m.group(1)
+        if nome in vaos:
+            continue
+        vaos[nome] = (m.start(), niveis[i + 1].start() if i + 1 < len(niveis) else len(f))
+    sem_niveis = "III" not in vaos and "IV" not in vaos
+
+    cobertura: dict[str, dict] = {}
+    com_pendencia: list[str] = []
+    grupos = ("III", "IV") if not sem_niveis else ("*",)
+    for grupo in grupos:
+        a, b = (0, len(f)) if grupo == "*" else vaos.get(grupo, (0, 0))
+        if b <= a:
+            continue
+        rotulos: list[tuple[int, int, str]] = []  # (início, fim do rótulo, tipo)
+        for tipo, (nivel, rx) in _ITENS_SICAF.items():
+            if grupo != "*" and nivel != grupo:
+                continue
+            m = rx.search(f, a, b)
+            if m:
+                rotulos.append((m.start(), m.end(), tipo))
+        rotulos.sort()
+        # pendência: em qualquer ponto do bloco do nível (título, itens ou "Situação do nível",
+        # até o próximo título de nível) ou, sem níveis, no texto todo
+        if grupo == "*":
+            pend = pendencia_global
+        else:
+            pend = bool(_RE_PENDENCIA_NIVEL.search(f, a, b))
+            if pend:
+                com_pendencia.append(grupo)
+        if not rotulos:
+            continue  # ex.: "Nenhum registro encontrado"
+        achados: dict[str, tuple[Optional[date], bool]] = {}
+        faltou = False
+        for k, (ri, rf, tipo) in enumerate(rotulos):
+            jf = rotulos[k + 1][0] if k + 1 < len(rotulos) else b
+            md = _RE_DATA.search(f, rf, jf)
+            if not md:
+                faltou = True
+                continue
+            # modo (Automática/Manual): da linha do rótulo até a linha seguinte à da data
+            trecho = f[ri: min(jf, _fim_linha(f, md.end(), 1))]
+            achados[tipo] = (_data_de(md), _automatica(trecho))
+        if faltou:
+            # layout em colunas: rótulos de um lado, datas do outro -> pareia na ordem
+            datas = list(_RE_DATA.finditer(f, rotulos[0][1], b))
+            if len(datas) == len(rotulos):
+                achados = {
+                    tipo: (_data_de(md), _automatica(f[md.start(): _fim_linha(f, md.end())]))
+                    for (_, _, tipo), md in zip(rotulos, datas)
+                }
+        for _, _, tipo in rotulos:
+            if tipo in achados:
+                v, aut = achados[tipo]
+                cobertura[tipo] = {"validade": v, "automatica": aut, "pendencia": pend}
+    return cobertura, com_pendencia
+
+
+def itens_cobertura(c: Certidao) -> dict[str, dict]:
+    """Itens de ``cobertura_sicaf`` por tipo, sem as chaves reservadas ("_situacao" etc.)."""
+    return {k: v for k, v in c.cobertura_sicaf.items() if not k.startswith("_")}
+
+
+_RE_SITUACAO_FORNECEDOR = re.compile(r"SITUACAO DO FORNECEDOR\s*:[ \t]*([^\n]*)")
+_RE_OCORRENCIA_SICAF = re.compile(
+    r"(?m)^(OCORRENCIAS? IMPEDITIVAS INDIRETAS|IMPEDIMENTOS? DE LICITAR|OCORRENCIAS?(?: E IMPEDIMENTOS)?)"
+    r"\s*:[ \t]*([^\n]*)"
+)
+
+
+def _situacao_fornecedor_sicaf(t: _Texto) -> dict:
+    """{"credenciado": bool, "situacao": str|None, "impedimento": str|None} da declaração."""
+    f = t.linhas
+    situacao = None
+    m = _RE_SITUACAO_FORNECEDOR.search(f)
+    if m and m.group(1).strip():
+        situacao = re.sub(r"\s+", " ", t.original_de(*m.span(1))).strip(" .;:-")
+    credenciado = bool(m) and bool(re.match(r"CREDENCIADO\b", m.group(1).strip()))
+    impedimentos: list[str] = []
+    for mo in _RE_OCORRENCIA_SICAF.finditer(f):
+        ini, fim = mo.span(2)
+        if not mo.group(2).strip():  # valor na linha seguinte
+            ini = fim + 1
+            fim = _fim_linha(f, ini) if ini < len(f) else ini
+        valor = f[ini:fim].strip()
+        if not valor or valor.startswith("NADA CONSTA"):
+            continue
+        rotulo = t.original_de(*mo.span(1)).strip()
+        impedimentos.append(f"{rotulo}: " + re.sub(r"\s+", " ", t.original_de(ini, fim)).strip())
+    return {"credenciado": credenciado, "situacao": situacao,
+            "impedimento": "; ".join(impedimentos) or None}
+
+
+_NOME_NIVEL = {
+    "III": "nível III (Regularidade Fiscal e Trabalhista Federal)",
+    "IV": "nível IV (Regularidade Fiscal Estadual/Distrital e Municipal)",
+}
+
+
 def _regra_sicaf(t: _Texto, c: Certidao) -> None:
     f = t.plano
     c.orgao_emissor = "SICAF (Compras.gov.br)"
-    sem_neg = re.sub(r"(?:NAO POSSUI|SEM|NENHUMA|INEXISTENCIA DE|NAO HA) PENDENCIAS?", "", f)
-    if re.search(r"PENDENCIA", sem_neg):
+    pendencia = bool(re.search(r"PENDENCIA", _RE_NEG_PENDENCIA.sub("", f)))
+    c.cobertura_sicaf, niveis_pend = _cobertura_sicaf(t, pendencia)
+    if pendencia:
         c.situacao = Situacao.INDETERMINADA
-        c.avisos.append("SICAF indica pendência: conferir a declaração")
+        if niveis_pend:
+            c.avisos.append("SICAF indica pendência no " + " e no ".join(_NOME_NIVEL[n] for n in niveis_pend)
+                            + ": conferir a declaração")
+        else:
+            c.avisos.append("SICAF indica pendência: conferir a declaração")
     else:
         c.situacao = Situacao.REGULAR
-    datas = []
-    for m in re.finditer(r"\bVALIDADE\b", f):
-        d, _ = _data_em(f, m.end())
-        if d:
-            datas.append(d)
+    sit = _situacao_fornecedor_sicaf(t)
+    c.cobertura_sicaf["_situacao"] = sit
+    if sit["situacao"] is None:
+        c.avisos.append("SICAF: situação do fornecedor não identificada na declaração: conferir")
+    elif not sit["credenciado"]:
+        c.avisos.append(f"SICAF: fornecedor {sit['situacao']}")
+    if sit["impedimento"]:
+        c.avisos.append(f"SICAF: {sit['impedimento']}")
+    datas = [v["validade"] for v in itens_cobertura(c).values() if v["validade"]]
+    if not datas:
+        for m in re.finditer(r"\bVALIDADE\b", f):
+            d, _ = _data_em(f, m.end())
+            if d:
+                datas.append(d)
     if datas:
         c.validade = min(datas)
         if len(datas) > 1:
@@ -739,10 +886,14 @@ def _comuns(t: _Texto, c: Certidao) -> None:
 
 def _avaliar(c: Certidao, multiplas: bool) -> None:
     conf = 0.95
+    # SICAF lido por nível: a "situação indeterminada" vem de pendência identificada (não é falha
+    # de leitura) e um item vencido listado na declaração pode ser anterior à emissão.
+    sicaf_lido = c.tipo == TipoCertidao.SICAF and bool(itens_cobertura(c))
+    pend_sicaf = sicaf_lido and any("SICAF indica pendência" in a for a in c.avisos)
     if c.tipo == TipoCertidao.DESCONHECIDA:
         conf -= 0.4
         c.avisos.append("Tipo de certidão não identificado")
-    if c.situacao == Situacao.INDETERMINADA:
+    if c.situacao == Situacao.INDETERMINADA and not pend_sicaf:
         conf -= 0.25
         c.avisos.append("Situação (negativa/positiva/regular) não identificada")
     if not c.validade:
@@ -761,7 +912,7 @@ def _avaliar(c: Certidao, multiplas: bool) -> None:
         c.avisos.append("Código de controle/autenticidade não encontrado")
     if multiplas:
         conf -= 0.1
-    if c.validade and c.data_emissao and c.validade < c.data_emissao:
+    if c.validade and c.data_emissao and c.validade < c.data_emissao and not sicaf_lido:
         conf -= 0.1
         c.avisos.append("Validade anterior à emissão: conferir datas")
     c.confianca = round(max(0.0, min(1.0, conf)), 2)
@@ -811,6 +962,8 @@ def ler_texto(texto: str, arquivo: str = "") -> Certidao:
 
 
 def _precisa_ia(c: Certidao) -> bool:
+    if c.tipo == TipoCertidao.SICAF and itens_cobertura(c):
+        return False  # declaração lida pelas regras; a pendência é tratada no validador
     return c.tipo == TipoCertidao.DESCONHECIDA or c.situacao == Situacao.INDETERMINADA
 
 

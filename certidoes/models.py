@@ -71,6 +71,11 @@ class Certidao:
     confianca: float = 0.0                # 0..1
     avisos: list[str] = field(default_factory=list)
     texto: str = field(default="", repr=False)
+    # Só para declarações do SICAF: o que a declaração comprova, por tipo de certidão.
+    # Chave = TipoCertidao.value ("federal", "fgts", "trabalhista", "estadual", "municipal").
+    # Valor = {"validade": date | None, "automatica": bool, "pendencia": bool}
+    #   automatica=True quando o SICAF marca a certidão como obtida por integração com o emissor.
+    cobertura_sicaf: dict[str, dict] = field(default_factory=dict)
 
 
 @dataclass
@@ -84,6 +89,8 @@ class Contrato:
     gestor: str = ""
     objeto: str = ""
     competencia: str = ""                  # ex.: "10/2026"
+    # Se True, a declaração do SICAF pode comprovar itens exigidos que não vieram em PDF próprio.
+    aceitar_sicaf: bool = False
     exigidas: list[TipoCertidao] = field(default_factory=lambda: [
         TipoCertidao.FEDERAL, TipoCertidao.FGTS, TipoCertidao.TRABALHISTA,
         TipoCertidao.ESTADUAL, TipoCertidao.MUNICIPAL,

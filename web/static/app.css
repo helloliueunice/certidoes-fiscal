@@ -28,6 +28,9 @@ fieldset { border: 0; padding: 0; margin: 0; }
 #lista-portais .br-tag { margin-right: 6px; }
 
 .br-upload { max-width: none; }
+.br-upload .upload-button { max-width: none; height: auto; min-height: 64px; display: flex; align-items: center;
+  justify-content: center; gap: 8px; white-space: normal; text-align: center; }
+.br-upload .upload-list { max-width: none; }
 .br-upload .upload-list .br-item .content { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .status-tag { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; white-space: nowrap; }
@@ -73,6 +76,64 @@ fieldset { border: 0; padding: 0; margin: 0; }
   .br-table table td::before { content: attr(data-th) ": "; font-weight: 600; }
   .campos { grid-template-columns: 1fr; }
   .detalhe > .content { padding-left: 8px; }
+}
+
+/* ---------- SICAF em destaque, tag informativa, textos de minuta */
+.br-tag.info { background: var(--info, #155bcb); color: #fff; }
+.d-inline { display: inline; }
+.resumo .cartao.info { border-left-color: var(--info, #155bcb); }
+#lista-portais .portal-destaque { background: var(--green-cool-vivid-5, #e3f5e1); border-left: 4px solid var(--success, #168821); }
+.ajuda-checkbox { padding-left: 28px; color: var(--gray-60, #636363); }
+.texto-minuta { background: var(--gray-2, #f8f8f8); border: 1px solid var(--gray-10, #e6e6e6); border-radius: 6px;
+  padding: 12px; white-space: pre-wrap; word-break: break-word; font-family: inherit; font-size: var(--font-size-scale-base, 14px);
+  max-height: 420px; overflow: auto; margin: 0; }
+.estrategia { padding-left: 20px; margin-top: 4px; }
+.estrategia li { margin-bottom: 4px; }
+
+/* ---------- mutirão */
+.resumo-mutirao { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.resumo-mutirao .cartao { margin: 0; }
+.resumo-mutirao .cartao.destaque { background: var(--green-cool-vivid-5, #e3f5e1); }
+.progresso .barra { height: 12px; border-radius: 6px; background: var(--gray-10, #e6e6e6); overflow: hidden; }
+.progresso .barra > span { display: block; width: 0; height: 100%; background: var(--interactive, #1351b4); transition: width .2s; }
+.progresso .barra.completo > span { background: var(--success, #168821); }
+.grupo-mutirao { margin-bottom: var(--spacing-scale-3x, 24px); border: 1px solid var(--gray-10, #e6e6e6); }
+.grupo-mutirao .card-header { padding: 16px 16px 8px; border-bottom: 1px solid var(--gray-10, #e6e6e6); }
+.grupo-mutirao .card-content { padding: 8px 16px 12px; }
+.grupo-mutirao .card-footer { padding: 12px 16px; border-top: 1px solid var(--gray-10, #e6e6e6); display: block; }
+.grupo-mutirao .grupo-id { flex: 1 1 320px; min-width: 0; }
+.grupo-mutirao .grupo-contagem { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.lista-plano .item-plano { display: grid; grid-template-columns: 96px minmax(0, 1fr) minmax(0, 340px); gap: 12px 16px;
+  align-items: start; padding: 12px 0; border-bottom: 1px solid var(--gray-10, #e6e6e6); }
+.lista-plano .item-plano:last-child { border-bottom: 0; }
+.lista-plano .item-nome { font-weight: 600; }
+.lista-plano .item-plano.feito .item-info { opacity: .6; }
+.lista-plano .item-plano.feito .item-nome { text-decoration: line-through; }
+.lista-plano .item-portais { display: flex; flex-direction: column; gap: 8px; }
+.lista-plano .portal-linha { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.lista-plano .portal-obs { flex-basis: 100%; font-size: var(--font-size-scale-down-01, 11.6px); color: var(--gray-60, #636363); }
+.lista-plano .status-tag { margin-right: 4px; }
+.lista-validas { list-style: none; padding: 0; margin: 0; }
+.lista-validas li { margin-bottom: 6px; }
+.detalhe.validas, .detalhe.texto-solicitacao { border-bottom: 0; }
+
+@media (max-width: 991px) {
+  .resumo-mutirao { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 575px) {
+  .br-header .header-top { flex-wrap: wrap; row-gap: 8px; }
+  .br-header .header-actions { order: 2; width: 100%; }
+  .br-header .header-actions .header-links { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+  .br-header .header-actions .header-links .br-button { flex: 1 1 auto; justify-content: center; padding: 0 12px;
+    font-size: var(--font-size-scale-down-01, 11.6px); margin: 0; }
+}
+@media (max-width: 767px) {
+  .grupo-mutirao .card-footer .br-button, .solicitacao .br-button { white-space: normal; height: auto; min-height: 32px; padding-top: 6px; padding-bottom: 6px; text-align: center; }
+  .resumo-mutirao { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lista-plano .item-plano { grid-template-columns: 1fr; gap: 8px; }
+  .lista-plano .item-portais .br-button { flex: 1 1 auto; justify-content: center; }
+  .grupo-mutirao .grupo-contagem { justify-content: flex-start; margin-top: 8px; }
+  .grupo-mutirao .card-footer .br-button { width: 100%; justify-content: center; margin-right: 0 !important; }
 }
 
 /* texto só para leitores de tela */

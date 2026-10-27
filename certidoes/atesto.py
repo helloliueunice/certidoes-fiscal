@@ -6,7 +6,8 @@ from __future__ import annotations
 
 import csv
 import os
-from datetime import datetime
+from datetime import date, datetime
+from typing import Optional
 from xml.sax.saxutils import escape
 
 from reportlab.lib import colors
@@ -23,7 +24,7 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from .models import Certidao, ResultadoValidacao, Semaforo, formatar_cnpj
+from .models import Certidao, ItemChecklist, ResultadoValidacao, Semaforo, TipoCertidao, formatar_cnpj
 from .validador import (
     ROTULO_SEMAFORO,
     ROTULO_SITUACAO,
@@ -50,6 +51,27 @@ CHECKLIST_MANUAL = [
     "Documentos juntados ao processo.",
     "Nota fiscal compatível com a competência.",
 ]
+
+
+def validade_item(item: ItemChecklist) -> Optional[date]:
+    """Validade do item do checklist.
+
+    Para item comprovado pela declaração do SICAF, é a validade da certidão daquele tipo
+    (cobertura_sicaf[tipo]["validade"]), não a da declaração. Chaves reservadas ("_...") são
+    ignoradas.
+    """
+    cert = item.certidao
+    if not cert:
+        return None
+    if cert.tipo == TipoCertidao.SICAF and not item.tipo.value.startswith("_"):
+        info = {k: v for k, v in (cert.cobertura_sicaf or {}).items()
+                if not str(k).startswith("_")}.get(item.tipo.value)
+        if isinstance(info, dict):
+            v = info.get("validade")
+            return v if isinstance(v, date) else None
+        if item.tipo != TipoCertidao.SICAF:
+            return None
+    return cert.validade
 
 
 def _e(s) -> str:
@@ -96,8 +118,7 @@ def _minuta(resultado: ResultadoValidacao, orgao: str) -> tuple[str, list[str]]:
     if resultado.apto_atesto:
         lista = "; ".join(
             f"{i.tipo.rotulo}"
-            + (f" (validade {formatar_data(i.certidao.validade)})"
-               if i.certidao and i.certidao.validade else "")
+            + (f" (validade {formatar_data(validade_item(i))})" if validade_item(i) else "")
             for i in resultado.itens
         )
         pars = [
@@ -195,7 +216,7 @@ def gerar_pdf(
             Paragraph(_e(item.tipo.rotulo), st["cel"]),
             Paragraph(f"{_e(situ)}<br/>{_e(item.mensagem)}", st["cel"]),
             Paragraph(ROTULO_SEMAFORO[item.semaforo], st["celc"]),
-            Paragraph(formatar_data(cert.validade) if cert else "—", st["cel"]),
+            Paragraph(formatar_data(validade_item(item)) or "—" if cert else "—", st["cel"]),
             Paragraph(_e(cert.codigo_controle) if cert and cert.codigo_controle else "—", st["cel"]),
             Paragraph(_e(os.path.basename(cert.arquivo)) if cert else "—", st["cel"]),
         ])
@@ -271,10 +292,28 @@ def gerar_pdf(
     return caminho_saida
 
 
+_INICIO_FORMULA = ("=", "+", "-", "@", "\t", "\r")
+
+
+def celula_segura(valor) -> str:
+    """Texto para célula de CSV sem risco de injeção de fórmula (Excel/LibreOffice).
+
+    Toda célula que comece com = + - @ tabulação ou CR recebe um apóstrofo na frente.
+    """
+    texto = "" if valor is None else str(valor)
+    return "'" + texto if texto.startswith(_INICIO_FORMULA) else texto
+
+
+def linha_segura(linha: dict) -> dict:
+    return {k: celula_segura(v) for k, v in linha.items()}
+
+
 CAMPOS_CSV = [
     "data_referencia", "competencia", "contrato", "cnpj", "razao_social", "fiscal",
     "item", "semaforo", "resultado", "situacao", "validade", "codigo_controle",
     "arquivo", "mensagem", "apto_atesto",
+    # colunas acrescentadas ao final (compatibilidade com planilhas antigas)
+    "uf_sede", "municipio_sede", "tipo", "validade_iso", "via_sicaf",
 ]
 
 
@@ -289,7 +328,7 @@ def gerar_csv(resultados: list[ResultadoValidacao], caminho: str) -> str:
             c = r.contrato
             for i in r.itens:
                 cert = i.certidao
-                w.writerow({
+                w.writerow(linha_segura({
                     "data_referencia": formatar_data(r.data_referencia),
                     "competencia": c.competencia,
                     "contrato": c.numero,
@@ -300,10 +339,15 @@ def gerar_csv(resultados: list[ResultadoValidacao], caminho: str) -> str:
                     "semaforo": i.semaforo.value,
                     "resultado": ROTULO_SEMAFORO[i.semaforo],
                     "situacao": ROTULO_SITUACAO[cert.situacao] if cert else "",
-                    "validade": formatar_data(cert.validade) if cert else "",
+                    "validade": formatar_data(validade_item(i)),
                     "codigo_controle": (cert.codigo_controle or "") if cert else "",
                     "arquivo": os.path.basename(cert.arquivo) if cert else "",
                     "mensagem": i.mensagem,
                     "apto_atesto": "sim" if r.apto_atesto else "não",
-                })
+                    "uf_sede": c.uf_sede,
+                    "municipio_sede": c.municipio_sede,
+                    "tipo": i.tipo.value,
+                    "validade_iso": validade_item(i).isoformat() if validade_item(i) else "",
+                    "via_sicaf": "sim" if cert and cert.tipo == TipoCertidao.SICAF else "não",
+                }))
     return caminho

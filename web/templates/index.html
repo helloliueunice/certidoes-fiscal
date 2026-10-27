@@ -82,6 +82,14 @@
         {% endfor %}
       </div>
     </fieldset>
+    <div class="br-checkbox mt-2">
+      <input id="aceitar_sicaf" name="aceitar_sicaf" type="checkbox" value="1" aria-describedby="aceitar-sicaf-ajuda" {% if v.aceitar_sicaf %}checked{% endif %}>
+      <label for="aceitar_sicaf">Aceitar a declaração do SICAF como comprovação de federal, FGTS e trabalhista</label>
+    </div>
+    <p class="text-down-01 mt-1 mb-2 ajuda-checkbox" id="aceitar-sicaf-ajuda">A declaração deve ser obtida <strong>por você, fiscal, no {% if URL_SICAF %}<a href="{{ URL_SICAF }}" target="_blank" rel="noopener">SICAF (Compras.gov.br)</a>{% else %}SICAF (Compras.gov.br){% endif %}, na data do atesto</strong>.
+      A declaração enviada pela contratada não serve: é "simples consulta". Só os itens marcados <strong>"Automática"</strong> vêm direto do emissor
+      (evitam os captchas da Receita, da Caixa e do TST); os marcados <strong>"Manual"</strong> foram inseridos pelo fornecedor e precisam ser conferidos no site do emissor.
+      Envie a declaração que você obteve na seção 3.</p>
     <div class="row mt-2">
       <div class="col-md-4"><div class="br-input">
         <label for="dias_alerta">Avisar quando faltar até (dias) para vencer</label>
@@ -112,7 +120,11 @@
     <div class="mt-3">
       <h3 class="h5">Certidão federal pela API oficial (Conecta gov.br)</h3>
       {% if conecta_ok %}
-        <button class="br-button secondary" type="button" id="btn-conecta"><i class="fas fa-cloud-download-alt" aria-hidden="true"></i>Consultar CND federal via Conecta</button>
+        <p class="text-down-01">Sem captcha: o órgão aderiu à API oficial. Baixe o PDF e <strong>anexe-o na seção 3</strong> junto com as demais certidões.</p>
+        <div class="d-flex flex-wrap">
+          <button class="br-button secondary mr-2 mb-2" type="submit" form="form-cnd" id="btn-cnd-pdf"><i class="fas fa-file-download" aria-hidden="true"></i>Baixar CND federal (PDF)</button>
+          <button class="br-button tertiary mb-2" type="button" id="btn-conecta"><i class="fas fa-cloud-download-alt" aria-hidden="true"></i>Só consultar a situação</button>
+        </div>
         <pre id="resp-conecta" class="mt-2" hidden></pre>
       {% else %}
         <p class="text-down-01">A consulta automática, sem captcha, exige adesão do órgão à API Consulta CND do Conecta gov.br.
@@ -127,6 +139,7 @@
     <div class="br-upload" id="upload">
       <label class="upload-label" for="arquivos"><span>Certidões em PDF (até {{ max_arquivos }} arquivos, {{ max_mb }} MB cada)</span></label>
       <input class="upload-input" id="arquivos" name="arquivos" type="file" multiple accept="application/pdf,.pdf" aria-label="Enviar certidões em PDF">
+      <button class="upload-button" type="button" aria-controls="arquivos"><i class="fas fa-upload" aria-hidden="true"></i><span>Selecione os PDFs ou arraste-os para cá</span></button>
       <div class="upload-list" id="upload-lista"></div>
     </div>
     <p class="text-down-01 mt-1">Clique ou arraste os arquivos para a área acima. Pode enviar todos de uma vez.</p>
@@ -141,5 +154,11 @@
     </div>
   </section>
 </form>
+{% if conecta_ok %}
+<!-- formulário separado (não pode ficar dentro do principal); abre em nova aba para não perder o preenchido -->
+<form id="form-cnd" method="post" action="/conecta/cnd.pdf" target="_blank">
+  <input type="hidden" name="cnpj" id="cnd-cnpj" value="{{ v.cnpj }}">
+</form>
+{% endif %}
 {% endblock %}
 {% block scripts %}<script src="/static/app.js"></script>{% endblock %}

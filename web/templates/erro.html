@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titulo %}Aviso — {{ NOME_SISTEMA }}{% endblock %}
+{% block conteudo %}
+<div class="br-message danger" role="alert">
+  <div class="icon"><i class="fas fa-times-circle fa-lg" aria-hidden="true"></i></div>
+  <div class="content"><span class="message-title">{{ titulo }}</span>
+    <span class="message-body"> {{ mensagem }}</span></div>
+</div>
+<a class="br-button primary" href="{{ voltar }}"><i class="fas fa-arrow-left" aria-hidden="true"></i>{{ rotulo_voltar }}</a>
+{% endblock %}

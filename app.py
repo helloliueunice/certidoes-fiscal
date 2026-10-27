@@ -112,6 +112,10 @@ with st.sidebar:
     st.subheader("Certidões exigidas no contrato")
     exigidas = [t for t in TIPOS_EXIGIVEIS
                 if st.checkbox(t.rotulo, value=t in PADRAO, key=f"exig_{t.value}")]
+    aceitar_sicaf = st.checkbox(
+        "Aceitar a declaração do SICAF como comprovação de federal, FGTS e trabalhista",
+        value=False, key="aceitar_sicaf",
+        help="O SICAF obtém essas certidões automaticamente do emissor; evita 3 captchas.")
     dias_alerta = st.number_input("Avisar quando faltar até (dias) para vencer",
                                   min_value=0, max_value=90, value=15, step=1, key="dias")
     st.divider()
@@ -127,7 +131,8 @@ contrato_ok = bool(numero and cnpj_valido(cnpj) and razao and municipio)
 def _contrato() -> Contrato:
     return Contrato(numero=numero.strip(), cnpj=cnpj, razao_social=razao.strip(), uf_sede=uf,
                     municipio_sede=municipio.strip(), fiscal=fiscal.strip(),
-                    competencia=competencia.strip(), exigidas=exigidas)
+                    competencia=competencia.strip(), exigidas=exigidas,
+                    aceitar_sicaf=aceitar_sicaf)
 
 
 st.title("📋 Certidões de regularidade para atesto")

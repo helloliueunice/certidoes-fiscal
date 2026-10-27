@@ -337,3 +337,345 @@ def test_sp_estadual_de_outra_uf_nao_complementa():
     res = validar(c, [pge, sefaz, rj], hoje=HOJE)
     assert rj in res.extras
     assert "Complementa" not in nota_extra(rj, res)
+
+
+# ---------------------------------------------------------------- SICAF como comprovação
+
+def cob(dias=100, automatica=True, pendencia=False):
+    return {"validade": HOJE + timedelta(days=dias) if dias is not None else None,
+            "automatica": automatica, "pendencia": pendencia}
+
+
+CREDENCIADO = {"credenciado": True, "situacao": "Credenciado", "impedimento": None}
+
+
+def sicaf_cert(cobertura=None, cnpj=CNPJ, arquivo="sicaf.pdf", situacao_forn=CREDENCIADO, **kw):
+    if cobertura is None:
+        cobertura = {t.value: cob() for t in (T.FEDERAL, T.FGTS, T.TRABALHISTA, T.ESTADUAL, T.MUNICIPAL)}
+    cobertura = dict(cobertura)
+    if situacao_forn is not None:
+        cobertura["_situacao"] = situacao_forn
+    kw.setdefault("situacao", Situacao.REGULAR)
+    kw.setdefault("data_emissao", HOJE)
+    return cert(T.SICAF, cnpj=cnpj, arquivo=arquivo, cobertura_sicaf=cobertura, **kw)
+
+
+def contrato_sicaf(**kw):
+    c = contrato(**kw)
+    c.aceitar_sicaf = True
+    return c
+
+
+def test_sicaf_sozinho_comprova_tudo_verde():
+    s = sicaf_cert()
+    res = validar(contrato_sicaf(), [s], hoje=HOJE)
+    assert all(i.semaforo == Semaforo.VERDE for i in res.itens)
+    assert all(i.certidao is s for i in res.itens)
+    assert item(res, T.FGTS).mensagem == (
+        "Comprovada pelo SICAF (obtida automaticamente do emissor). Válida até 04/02/2027 (100 dias).")
+    assert s not in res.extras
+    assert res.apto_atesto
+
+
+@pytest.mark.parametrize("dias,esperado", [(16, Semaforo.VERDE), (15, Semaforo.AMARELO),
+                                           (0, Semaforo.AMARELO), (-1, Semaforo.VERMELHO)])
+def test_sicaf_limites_de_validade(dias, esperado):
+    s = sicaf_cert({"fgts": cob(dias)})
+    res = validar(contrato_sicaf(exigidas=[T.FGTS]), [s], hoje=HOJE)
+    assert res.itens[0].semaforo == esperado
+    assert res.itens[0].certidao is s
+    if esperado == Semaforo.VERMELHO:
+        assert res.itens[0].mensagem.startswith("SICAF: certidão vencida em 26/10/2026.")
+        assert "Não comprovada" not in res.itens[0].mensagem
+
+
+def test_sicaf_manual_amarelo():
+    res = validar(contrato_sicaf(exigidas=[T.MUNICIPAL]),
+                  [sicaf_cert({"municipal": cob(automatica=False)})], hoje=HOJE)
+    i = res.itens[0]
+    assert i.semaforo == Semaforo.AMARELO
+    assert "inserida manualmente pelo fornecedor no SICAF: conferir a certidão no site do emissor" in i.mensagem
+    assert "automaticamente" not in i.mensagem
+
+
+def test_sicaf_pendencia_no_nivel_amarelo():
+    res = validar(contrato_sicaf(exigidas=[T.ESTADUAL]),
+                  [sicaf_cert({"estadual": cob(pendencia=True)})], hoje=HOJE)
+    assert res.itens[0].semaforo == Semaforo.AMARELO
+    assert "pendência" in res.itens[0].mensagem
+
+
+def test_sicaf_validade_ausente_amarelo():
+    res = validar(contrato_sicaf(exigidas=[T.FGTS]), [sicaf_cert({"fgts": cob(None)})], hoje=HOJE)
+    assert res.itens[0].semaforo == Semaforo.AMARELO
+
+
+def test_sicaf_sem_o_item_continua_nao_enviada():
+    s = sicaf_cert({"federal": cob()})
+    res = validar(contrato_sicaf(exigidas=[T.FEDERAL, T.MUNICIPAL]), [s], hoje=HOJE)
+    m = item(res, T.MUNICIPAL)
+    assert m.semaforo == Semaforo.VERMELHO and m.certidao is None
+    assert m.mensagem.startswith("Não enviada.") and "não traz esta certidão" in m.mensagem
+    assert s not in res.extras   # usado no federal
+
+
+def test_sicaf_propria_verde_tem_prioridade():
+    s = sicaf_cert()
+    res = validar(contrato_sicaf(), kit() + [s], hoje=HOJE)
+    assert all(i.certidao.tipo != T.SICAF for i in res.itens)
+    assert all("SICAF" not in i.mensagem for i in res.itens)
+    assert s in res.extras
+    assert "não utilizado" in nota_extra(s, res)
+
+
+def test_sicaf_propria_vermelha_e_sicaf_verde_usa_melhor_e_cita_as_duas():
+    propria = cert(T.FEDERAL, dias=-2, arquivo="cnd_vencida.pdf")
+    s = sicaf_cert({"federal": cob()})
+    res = validar(contrato_sicaf(exigidas=[T.FEDERAL]), [propria, s], hoje=HOJE)
+    i = res.itens[0]
+    assert i.semaforo == Semaforo.VERDE and i.certidao is s
+    assert "Comprovada pelo SICAF" in i.mensagem
+    assert "cnd_vencida.pdf" in i.mensagem and "Vencida em 25/10/2026" in i.mensagem
+    assert propria in res.extras and s not in res.extras
+    assert "comprovado pela declaração do SICAF" in nota_extra(propria, res)
+
+
+def test_sicaf_propria_vermelha_e_sicaf_vermelho_mantem_propria():
+    propria = cert(T.FEDERAL, situacao=Situacao.POSITIVA)
+    s = sicaf_cert({"federal": cob(-1)})
+    res = validar(contrato_sicaf(exigidas=[T.FEDERAL]), [propria, s], hoje=HOJE)
+    i = res.itens[0]
+    assert i.semaforo == Semaforo.VERMELHO and i.certidao is propria
+    assert "POSITIVA" in i.mensagem and "SICAF" in i.mensagem
+    assert s in res.extras
+
+
+def test_sicaf_propria_amarela_tem_prioridade_mas_cita_sicaf():
+    propria = cert(T.TRABALHISTA, dias=5)
+    s = sicaf_cert({"trabalhista": cob(150)})
+    res = validar(contrato_sicaf(exigidas=[T.TRABALHISTA]), [propria, s], hoje=HOJE)
+    i = res.itens[0]
+    assert i.semaforo == Semaforo.AMARELO and i.certidao is propria
+    assert "SICAF: Comprovada pelo SICAF" in i.mensagem
+
+
+def test_sicaf_sp_estadual_amarelo_com_nota():
+    c = contrato_sicaf(uf="SP", mun="São Paulo", exigidas=[T.ESTADUAL])
+    s = sicaf_cert({"estadual": cob()})
+    res = validar(c, [s], hoje=HOJE)
+    assert res.itens[0].semaforo == Semaforo.AMARELO and res.itens[0].certidao is s
+    assert "SICAF traz uma única certidão estadual; em SP confira PGE e SEFAZ" in res.itens[0].mensagem
+
+
+def test_sicaf_sp_so_pge_propria_vermelha_sicaf_supre_com_amarelo():
+    c = contrato_sicaf(uf="SP", mun="São Paulo", exigidas=[T.ESTADUAL])
+    pge = cert(T.ESTADUAL, uf="SP", orgao_emissor="PGE-SP", arquivo="pge.pdf",
+               texto="divida ativa")
+    s = sicaf_cert({"estadual": cob()})
+    res = validar(c, [pge, s], hoje=HOJE)
+    i = res.itens[0]
+    assert i.semaforo == Semaforo.AMARELO and i.certidao is s
+    assert "pge.pdf" in i.mensagem
+    assert pge in res.extras
+    assert "Complementa" not in nota_extra(pge, res)
+
+
+def test_sicaf_cnpj_diferente_nao_comprova():
+    s = sicaf_cert(cnpj=OUTRA)
+    res = validar(contrato_sicaf(exigidas=[T.FGTS]), [s], hoje=HOJE)
+    i = res.itens[0]
+    assert i.semaforo == Semaforo.VERMELHO and i.certidao is None
+    assert i.mensagem.startswith("Não enviada.") and "outro CNPJ" in i.mensagem
+    assert s in res.extras and "outro CNPJ" in nota_extra(s, res)
+
+
+def test_sicaf_de_filial():
+    s = sicaf_cert(cnpj=FILIAL)
+    res = validar(contrato_sicaf(exigidas=[T.FEDERAL, T.FGTS]), [s], hoje=HOJE)
+    assert item(res, T.FEDERAL).semaforo == Semaforo.VERDE
+    assert "abrange matriz e filiais" in item(res, T.FEDERAL).mensagem
+    assert item(res, T.FGTS).semaforo == Semaforo.AMARELO
+    assert "outro estabelecimento" in item(res, T.FGTS).mensagem
+
+
+def test_sicaf_cnpj_ausente_amarelo():
+    res = validar(contrato_sicaf(exigidas=[T.FGTS]), [sicaf_cert(cnpj=None)], hoje=HOJE)
+    assert res.itens[0].semaforo == Semaforo.AMARELO
+
+
+def test_sicaf_mais_recente_prevalece():
+    antigo = sicaf_cert({"fgts": cob(-3)}, arquivo="antigo.pdf", data_emissao=HOJE - timedelta(days=60))
+    novo = sicaf_cert({"fgts": cob(40)}, arquivo="novo.pdf", data_emissao=HOJE - timedelta(days=1))
+    res = validar(contrato_sicaf(exigidas=[T.FGTS]), [antigo, novo], hoje=HOJE)
+    assert res.itens[0].certidao is novo and res.itens[0].semaforo == Semaforo.VERDE
+    assert antigo in res.extras and novo not in res.extras
+
+
+def test_sicaf_extraido_por_ia_amarelo():
+    s = sicaf_cert({"fgts": cob()}, metodo="ia")
+    res = validar(contrato_sicaf(exigidas=[T.FGTS]), [s], hoje=HOJE)
+    assert res.itens[0].semaforo == Semaforo.AMARELO
+
+
+def test_sicaf_nao_aceito_mantem_comportamento_e_sugere_marcar():
+    s = sicaf_cert()
+    res = validar(contrato(exigidas=[T.FGTS]), [s], hoje=HOJE)
+    assert res.itens[0].semaforo == Semaforo.VERMELHO and res.itens[0].mensagem == "Não enviada."
+    assert s in res.extras
+    assert "marque 'Aceitar SICAF'" in nota_extra(s, res)
+
+
+def test_sicaf_aceito_sem_cobertura_lida():
+    s = cert(T.SICAF, situacao=Situacao.REGULAR, arquivo="sicaf.pdf")
+    res = validar(contrato_sicaf(exigidas=[T.FGTS]), [s], hoje=HOJE)
+    assert res.itens[0].semaforo == Semaforo.VERMELHO
+    assert s in res.extras and "conferir manualmente" in nota_extra(s, res)
+
+
+def test_sicaf_amostras_pdf(tmp_path):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import gerar_amostras
+    from certidoes.extrator import ler_pdf
+
+    gerar_amostras.gerar(tmp_path)
+    hoje = date.today()
+    c = Contrato(numero="1/2026", cnpj=gerar_amostras.CNPJ_EMPRESA, razao_social="X",
+                 uf_sede="MG", municipio_sede="Belo Horizonte", aceitar_sicaf=True)
+    res = validar(c, [ler_pdf(tmp_path / "sicaf.pdf")], hoje=hoje)
+    cores = {i.tipo: i.semaforo for i in res.itens}
+    assert cores == {T.FEDERAL: Semaforo.VERDE, T.FGTS: Semaforo.VERDE, T.TRABALHISTA: Semaforo.VERDE,
+                     T.ESTADUAL: Semaforo.AMARELO, T.MUNICIPAL: Semaforo.AMARELO}
+    assert res.apto_atesto and not res.extras
+
+    res = validar(c, [ler_pdf(tmp_path / "sicaf_pendencia.pdf")], hoje=hoje)
+    cores = {i.tipo: i.semaforo for i in res.itens}
+    # pendência na declaração (situação indeterminada) deixa todos os itens no mínimo amarelos
+    assert cores == {T.FEDERAL: Semaforo.AMARELO, T.FGTS: Semaforo.AMARELO, T.TRABALHISTA: Semaforo.AMARELO,
+                     T.ESTADUAL: Semaforo.AMARELO, T.MUNICIPAL: Semaforo.VERMELHO}
+    assert not res.apto_atesto
+
+    res = validar(c, [ler_pdf(tmp_path / "sicaf_descredenciado.pdf")], hoje=hoje)
+    cores = {i.tipo: i.semaforo for i in res.itens}
+    assert cores == {T.FEDERAL: Semaforo.AMARELO, T.FGTS: Semaforo.AMARELO, T.TRABALHISTA: Semaforo.AMARELO,
+                     T.ESTADUAL: Semaforo.VERMELHO, T.MUNICIPAL: Semaforo.VERMELHO}
+    fed = item(res, T.FEDERAL).mensagem
+    assert "SICAF: fornecedor Descredenciado" in fed and "Impedimento de Licitar: Consta" in fed
+
+
+
+# ---------------------------------------------------------------- SICAF: revisão independente
+
+def _amostras_tmp(tmp_path):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import gerar_amostras
+    gerar_amostras.gerar(tmp_path)
+    return gerar_amostras
+
+
+def test_cndt_positiva_recente_nao_e_substituida_por_sicaf_antigo(tmp_path):
+    """Reprodução da revisão: cndt_positiva.pdf (há 10 dias) + SICAF de 60 dias atrás."""
+    from certidoes.extrator import ler_pdf
+    ga = _amostras_tmp(tmp_path)
+    hoje = date.today()
+    pos = ler_pdf(tmp_path / "cndt_positiva.pdf")
+    s = sicaf_cert({"trabalhista": cob()}, cnpj=ga.CNPJ_EMPRESA, data_emissao=hoje - timedelta(days=60))
+    c = Contrato(numero="1", cnpj=ga.CNPJ_EMPRESA, razao_social="X", uf_sede="MG",
+                 municipio_sede="BH", aceitar_sicaf=True, exigidas=[T.TRABALHISTA])
+    i = validar(c, [pos, s], hoje=hoje).itens[0]
+    assert i.semaforo == Semaforo.VERMELHO and i.certidao is pos
+    assert (f"Certidão própria POSITIVA emitida em {(hoje - timedelta(days=10)).strftime('%d/%m/%Y')} é mais "
+            f"recente que a declaração do SICAF de {(hoje - timedelta(days=60)).strftime('%d/%m/%Y')} "
+            "— prevalece a mais recente") in i.mensagem
+
+
+@pytest.mark.parametrize("dias_pos,dias_sicaf", [(10, 60), (0, 0), (None, 0), (5, None)])
+def test_positiva_propria_mais_recente_ou_mesma_data_vermelho(dias_pos, dias_sicaf):
+    pos = cert(T.TRABALHISTA, situacao=Situacao.POSITIVA,
+               data_emissao=HOJE - timedelta(days=dias_pos) if dias_pos is not None else None)
+    s = sicaf_cert({"trabalhista": cob()},
+                   data_emissao=HOJE - timedelta(days=dias_sicaf) if dias_sicaf is not None else None)
+    res = validar(contrato_sicaf(exigidas=[T.TRABALHISTA]), [pos, s], hoje=HOJE)
+    i = res.itens[0]
+    assert i.semaforo == Semaforo.VERMELHO and i.certidao is pos
+    assert "prevalece a mais recente" in i.mensagem
+    assert "Declaração do SICAF (não prevaleceu)" in i.mensagem
+    assert s in res.extras and "não prevaleceu" in nota_extra(s, res)
+
+
+def test_sicaf_mais_recente_que_positiva_amarelo_conflito():
+    pos = cert(T.TRABALHISTA, situacao=Situacao.POSITIVA, data_emissao=HOJE - timedelta(days=30))
+    s = sicaf_cert({"trabalhista": cob()}, data_emissao=HOJE)
+    i = validar(contrato_sicaf(exigidas=[T.TRABALHISTA]), [pos, s], hoje=HOJE).itens[0]
+    assert i.semaforo == Semaforo.AMARELO and i.certidao is s
+    assert ("conflito: certidão própria POSITIVA de 27/09/2026; SICAF de 27/10/2026 indica regular "
+            "— confira no site do emissor") in i.mensagem
+
+
+def test_positiva_mais_recente_que_negativa_propria_tambem_conta():
+    neg = cert(T.FEDERAL, data_emissao=HOJE - timedelta(days=20), arquivo="neg.pdf")
+    pos = cert(T.FEDERAL, situacao=Situacao.POSITIVA, data_emissao=HOJE - timedelta(days=5), arquivo="pos.pdf")
+    s = sicaf_cert({"federal": cob()}, data_emissao=HOJE - timedelta(days=30))
+    i = validar(contrato_sicaf(exigidas=[T.FEDERAL]), [neg, pos, s], hoje=HOJE).itens[0]
+    assert i.semaforo == Semaforo.VERMELHO and "POSITIVA" in i.mensagem
+
+
+def test_sicaf_com_situacao_indeterminada_minimo_amarelo():
+    s = sicaf_cert({"federal": cob()}, situacao=Situacao.INDETERMINADA)
+    i = validar(contrato_sicaf(exigidas=[T.FEDERAL]), [s], hoje=HOJE).itens[0]
+    assert i.semaforo == Semaforo.AMARELO and "pendência" in i.mensagem
+
+
+@pytest.mark.parametrize("dias,esperado", [(0, Semaforo.VERDE), (3, Semaforo.VERDE), (4, Semaforo.AMARELO)])
+def test_sicaf_data_emissao_antiga(dias, esperado):
+    s = sicaf_cert({"fgts": cob()}, data_emissao=HOJE - timedelta(days=dias))
+    i = validar(contrato_sicaf(exigidas=[T.FGTS]), [s], hoje=HOJE).itens[0]
+    assert i.semaforo == esperado
+    if esperado == Semaforo.AMARELO:
+        assert ("Declaração do SICAF emitida em 23/10/2026 (há 4 dias): consulte o SICAF novamente "
+                "na data do atesto") in i.mensagem
+
+
+def test_sicaf_data_emissao_ausente():
+    s = sicaf_cert({"fgts": cob()}, data_emissao=None)
+    i = validar(contrato_sicaf(exigidas=[T.FGTS]), [s], hoje=HOJE).itens[0]
+    assert i.semaforo == Semaforo.AMARELO
+    assert "consulte o SICAF novamente na data do atesto" in i.mensagem
+
+
+@pytest.mark.parametrize("valor,esperado", [("10", Semaforo.VERDE), ("1", Semaforo.AMARELO),
+                                            ("abc", Semaforo.AMARELO)])
+def test_sicaf_max_dias_configuravel(monkeypatch, valor, esperado):
+    monkeypatch.setenv("CERTIDOES_SICAF_MAX_DIAS", valor)
+    s = sicaf_cert({"fgts": cob()}, data_emissao=HOJE - timedelta(days=4 if valor == "10" else 2 if valor == "1" else 4))
+    assert validar(contrato_sicaf(exigidas=[T.FGTS]), [s], hoje=HOJE).itens[0].semaforo == esperado
+
+
+def test_sicaf_descredenciado_amarelo():
+    s = sicaf_cert({"fgts": cob()},
+                   situacao_forn={"credenciado": False, "situacao": "Descredenciado", "impedimento": None})
+    i = validar(contrato_sicaf(exigidas=[T.FGTS]), [s], hoje=HOJE).itens[0]
+    assert i.semaforo == Semaforo.AMARELO and "SICAF: fornecedor Descredenciado" in i.mensagem
+
+
+def test_sicaf_impedimento_amarelo():
+    imp = "Impedimento de Licitar: Consta - suspensão"
+    s = sicaf_cert({"fgts": cob()}, situacao_forn={**CREDENCIADO, "impedimento": imp})
+    i = validar(contrato_sicaf(exigidas=[T.FGTS]), [s], hoje=HOJE).itens[0]
+    assert i.semaforo == Semaforo.AMARELO and f"SICAF: {imp}" in i.mensagem
+
+
+def test_sicaf_situacao_fornecedor_nao_lida_amarelo():
+    s = sicaf_cert({"fgts": cob()}, situacao_forn=None)
+    i = validar(contrato_sicaf(exigidas=[T.FGTS]), [s], hoje=HOJE).itens[0]
+    assert i.semaforo == Semaforo.AMARELO and "situação do fornecedor não identificada" in i.mensagem
+
+
+def test_sicaf_so_com_chave_reservada_nao_comprova():
+    s = sicaf_cert({})
+    res = validar(contrato_sicaf(exigidas=[T.FGTS]), [s], hoje=HOJE)
+    assert res.itens[0].semaforo == Semaforo.VERMELHO
+    assert "sem itens de regularidade" in nota_extra(s, res)

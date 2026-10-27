@@ -17,12 +17,23 @@ Apoio ao fiscal de contrato na conferência mensal das certidões de regularidad
 3. **Documentar** — gera PDF com checklist, roteiro de conferência de autenticidade e **minuta**
    de atesto (ou de notificação à contratada, se houver pendência), além de CSV de controle.
 
+## Menos captchas, sem contornar
+- **SICAF:** marque "Aceitar o SICAF" e envie a declaração que *você* emitiu no Compras.gov.br na
+  data do atesto. Itens "Automática" comprovam federal, FGTS e trabalhista sem abrir esses portais.
+  O sistema alerta declaração antiga (> 3 dias), pendência, item "Manual", descredenciamento e
+  conflito com certidão própria positiva.
+- **Planejar emissão do mês** (`/mutirao`): envie os CSVs de controle dos meses anteriores e veja,
+  por contratada, só o que vence até a data de corte, o que dá para consultar no SICAF, o texto de
+  solicitação à contratada e os portais em sequência para um mutirão numa sessão só.
+- **Conecta gov.br:** com a adesão do órgão, baixa a CND federal em PDF sem captcha.
+- Minutas: `docs/estrategia_captcha.md`, `docs/oficio_orgaos_emissores.md`, cláusula atualizada.
+
 ## Como rodar
 ```bash
 pip install -r requirements.txt
 uvicorn web.main:app --reload   # interface gov.br DS em http://localhost:8000
 streamlit run app.py            # interface antiga (Streamlit)
-python -m pytest -q           # 119 testes
+python -m pytest -q           # 226 testes
 python tests/gerar_amostras.py  # recria os PDFs de teste (fictícios)
 ```
 
