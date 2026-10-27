@@ -1,0 +1,314 @@
+<title>Conferência de Certidões</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="vendor/rawline/rawline.css">
+<link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+<link rel="stylesheet" href="vendor/govbr-ds/core.min.css">
+<link rel="stylesheet" href="app.css">
+
+<nav class="br-skiplink">
+  <a class="br-item" href="#conteudo" accesskey="1">Ir para o conteúdo <span class="br-tag text ml-1">1</span></a>
+  <a class="br-item" href="#rodape" accesskey="2">Ir para o rodapé <span class="br-tag text ml-1">2</span></a>
+</nav>
+
+<header class="br-header compact" id="cabecalho">
+  <div class="container-lg">
+    <div class="header-top">
+      <div class="header-logo">
+        <span class="marca" aria-hidden="true"><i class="fas fa-clipboard-check"></i></span>
+        <span class="br-divider vertical"></span>
+        <div class="header-sign">Apoio à fiscalização de contratos</div>
+      </div>
+      <div class="header-actions">
+        <nav class="header-links" aria-label="Seções">
+          <a class="br-button small secondary" href="#conferir" data-vista="conferir"><i class="fas fa-clipboard-check" aria-hidden="true"></i>Conferir</a>
+          <a class="br-button small secondary" href="#planejar" data-vista="planejar"><i class="fas fa-calendar-check" aria-hidden="true"></i>Planejar emissão do mês</a>
+          <a class="br-button small secondary" href="#como-usar" data-vista="como-usar"><i class="fas fa-question-circle" aria-hidden="true"></i>Como usar</a>
+        </nav>
+      </div>
+    </div>
+    <div class="header-bottom">
+      <div class="header-menu">
+        <div class="header-info">
+          <div class="header-title">Conferência de Certidões</div>
+          <div class="header-subtitle">Certidões de regularidade para atesto de contratos públicos</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="d-flex flex-fill mb-5" id="conteudo">
+  <div class="container-lg d-flex">
+    <div class="col pt-3 pt-md-4">
+
+      <div class="br-message info" role="status" id="preparo">
+        <div class="icon"><span class="giro" aria-hidden="true"></span></div>
+        <div class="content"><span class="message-title">Preparando o verificador…</span>
+          <span class="message-body" id="preparo-texto"> Carregando as regras de leitura (só na primeira vez, alguns segundos).</span></div>
+      </div>
+
+      <!-- ===================================================== CONFERIR -->
+      <section class="vista" id="vista-conferir" aria-labelledby="t-conferir">
+        <h1 class="h2 mt-0" id="t-conferir">Conferir certidões de regularidade</h1>
+        <p class="text-up-01 mb-3">Informe os dados do contrato, busque as certidões nos portais oficiais e envie os PDFs.
+          O sistema monta o checklist e a minuta para o seu atesto.</p>
+        <div class="br-message success" role="note">
+          <div class="icon"><i class="fas fa-lock fa-lg" aria-hidden="true"></i></div>
+          <div class="content"><span class="message-title">Os PDFs não saem do seu computador.</span>
+            <span class="message-body"> A leitura é feita aqui mesmo, no navegador. Nada é enviado nem guardado em servidor.</span></div>
+        </div>
+
+        <div class="exemplo d-flex flex-wrap align-items-center justify-content-between mb-3">
+          <span class="text-medium mr-2">Primeira vez? Veja o sistema funcionando com certidões fictícias.</span>
+          <button class="br-button secondary small" type="button" id="btn-exemplo" disabled><i class="fas fa-flask" aria-hidden="true"></i>Testar com certidões de exemplo</button>
+        </div>
+
+        <div class="br-message danger" role="alert" id="erros-conferir" hidden>
+          <div class="icon"><i class="fas fa-times-circle fa-lg" aria-hidden="true"></i></div>
+          <div class="content"><span class="message-title">Corrija os itens abaixo.</span><ul class="message-body mb-0" id="erros-lista"></ul></div>
+        </div>
+
+        <form id="form-conferir" novalidate>
+          <section class="secao" aria-labelledby="t-contrato">
+            <h2 class="h4 secao-titulo" id="t-contrato"><span class="numero">1</span>Dados do contrato</h2>
+            <div class="row">
+              <div class="col-md-4 mb-3"><div class="br-input">
+                <label for="numero">Nº do contrato</label>
+                <input id="numero" type="text" placeholder="Ex.: 012/2026" autocomplete="off">
+              </div></div>
+              <div class="col-md-4 mb-3"><div class="br-input" id="campo-cnpj">
+                <label for="cnpj">CNPJ da contratada</label>
+                <input id="cnpj" type="text" inputmode="numeric" placeholder="00.000.000/0000-00" maxlength="18" aria-describedby="cnpj-ajuda" autocomplete="off">
+                <span class="feedback" id="cnpj-ajuda" role="status" hidden></span>
+              </div></div>
+              <div class="col-md-4 mb-3"><div class="br-input">
+                <label for="competencia">Competência (mês/ano)</label>
+                <input id="competencia" type="text" placeholder="MM/AAAA" autocomplete="off">
+              </div></div>
+              <div class="col-md-8 mb-3"><div class="br-input">
+                <label for="razao_social">Razão social</label>
+                <input id="razao_social" type="text" autocomplete="off">
+              </div></div>
+              <div class="col-md-4 mb-3"><div class="br-input">
+                <label for="fiscal">Fiscal do contrato</label>
+                <input id="fiscal" type="text" autocomplete="name">
+              </div></div>
+              <div class="col-md-2 mb-3"><div class="br-input">
+                <label for="uf">UF da sede</label>
+                <select id="uf" class="select-nativo"></select>
+              </div></div>
+              <div class="col-md-6 mb-3"><div class="br-input">
+                <label for="municipio">Município da sede</label>
+                <input id="municipio" type="text" placeholder="Ex.: São Paulo" autocomplete="off">
+              </div></div>
+              <div class="col-md-4 mb-3"><div class="br-input">
+                <label for="orgao">Órgão (aparece no PDF)</label>
+                <input id="orgao" type="text" autocomplete="organization">
+              </div></div>
+            </div>
+            <fieldset class="mt-2">
+              <legend class="label mb-1">Certidões exigidas no contrato</legend>
+              <div class="d-flex flex-wrap" id="exigidas"></div>
+            </fieldset>
+            <div class="br-checkbox mt-2">
+              <input id="aceitar_sicaf" type="checkbox" aria-describedby="aceitar-sicaf-ajuda">
+              <label for="aceitar_sicaf">Aceitar a declaração do SICAF como comprovação de federal, FGTS e trabalhista</label>
+            </div>
+            <p class="text-down-01 mt-1 mb-2 ajuda-checkbox" id="aceitar-sicaf-ajuda">A declaração deve ser obtida <strong>por você, fiscal, no
+              <a href="https://www.gov.br/compras/pt-br/acesso-a-informacao/perguntas-frequentes/sicaf-sistema/sicaf-sistema" target="_blank" rel="noopener">SICAF (Compras.gov.br)</a>, na data do atesto</strong>.
+              A declaração enviada pela contratada não serve: é "simples consulta". Só os itens marcados <strong>"Automática"</strong> vêm direto do emissor
+              (evitam os captchas da Receita, da Caixa e do TST); os marcados <strong>"Manual"</strong> foram inseridos pelo fornecedor e precisam ser conferidos no site do emissor.</p>
+            <div class="row mt-2">
+              <div class="col-md-4"><div class="br-input">
+                <label for="dias_alerta">Avisar quando faltar até (dias) para vencer</label>
+                <input id="dias_alerta" type="number" min="0" max="90" value="15">
+              </div></div>
+            </div>
+          </section>
+
+          <section class="secao" aria-labelledby="t-portais">
+            <h2 class="h4 secao-titulo" id="t-portais"><span class="numero">2</span>Buscar certidões nos portais oficiais</h2>
+            <div class="br-message info" role="note">
+              <div class="icon"><i class="fas fa-info-circle fa-lg" aria-hidden="true"></i></div>
+              <div class="content"><span class="message-title">Captcha é com você.</span>
+                <span class="message-body"> Abra cada portal, cole o CNPJ e salve o PDF. O sistema não contorna captcha. Se a contratada já enviou as certidões, pule esta etapa.</span></div>
+            </div>
+            <div id="cnpj-copiar" class="mb-3" hidden>
+              <span class="text-medium mr-2">CNPJ para colar:</span>
+              <span class="br-tag copiavel" id="cnpj-mascara"></span>
+              <button class="br-button small secondary ml-1" type="button" data-copiar="cnpj-mascara"><i class="fas fa-copy" aria-hidden="true"></i>Copiar</button>
+              <span class="br-tag ml-2 copiavel" id="cnpj-numeros"></span>
+              <button class="br-button small secondary ml-1" type="button" data-copiar="cnpj-numeros"><i class="fas fa-copy" aria-hidden="true"></i>Só números</button>
+            </div>
+            <div id="lista-portais" class="br-list" role="list" aria-live="polite">
+              <p class="text-down-01 m-0 p-2">Informe a UF e o município da sede para ver os portais.</p>
+            </div>
+          </section>
+
+          <section class="secao" aria-labelledby="t-envio">
+            <h2 class="h4 secao-titulo" id="t-envio"><span class="numero">3</span>Enviar os PDFs e conferir</h2>
+            <div class="br-upload" id="upload">
+              <label class="upload-label" for="arquivos"><span>Certidões em PDF (até 20 arquivos, 10 MB cada)</span></label>
+              <input class="upload-input" id="arquivos" type="file" multiple accept="application/pdf,.pdf" aria-label="Enviar certidões em PDF">
+              <button class="upload-button" type="button" data-abrir="arquivos"><i class="fas fa-upload" aria-hidden="true"></i><span>Selecione os PDFs ou arraste-os para cá</span></button>
+              <div class="upload-list" id="upload-lista"></div>
+            </div>
+            <p class="text-down-01 mt-1">Pode enviar todos de uma vez, inclusive a declaração do SICAF.</p>
+            <div class="br-textarea mt-3">
+              <label for="observacoes">Observações do fiscal (vão para o PDF)</label>
+              <textarea id="observacoes" rows="3"></textarea>
+            </div>
+            <div class="d-flex justify-content-end mt-4">
+              <button class="br-button primary" type="submit" id="btn-conferir" disabled><i class="fas fa-clipboard-check" aria-hidden="true"></i>Conferir certidões</button>
+            </div>
+          </section>
+        </form>
+      </section>
+
+      <!-- ===================================================== RESULTADO -->
+      <section class="vista" id="vista-resultado" aria-labelledby="t-resultado" hidden>
+        <div class="d-flex flex-wrap align-items-start justify-content-between">
+          <div>
+            <h1 class="h2 mt-0 mb-1" id="t-resultado">Resultado da conferência</h1>
+            <p class="text-up-01 mb-0" id="res-contrato"></p>
+            <p class="text-down-01" id="res-sede"></p>
+          </div>
+          <div class="d-flex flex-wrap acoes">
+            <button class="br-button primary mr-2 mb-2" type="button" id="btn-pdf" hidden><i class="fas fa-file-pdf" aria-hidden="true"></i>Baixar checklist e minuta (PDF)</button>
+            <button class="br-button secondary mr-2 mb-2" type="button" id="btn-csv" hidden><i class="fas fa-file-csv" aria-hidden="true"></i>Planilha de controle (CSV)</button>
+            <a class="br-button tertiary mb-2" href="#conferir"><i class="fas fa-redo" aria-hidden="true"></i>Nova conferência</a>
+          </div>
+        </div>
+        <p class="feedback d-flex text-down-01" role="status" id="aviso-download" hidden></p>
+        <div id="res-situacao"></div>
+        <div class="row resumo mb-4" aria-label="Resumo" id="res-resumo"></div>
+        <div class="br-table" title="Checklist de certidões">
+          <div class="table-header"><div class="top-bar"><div class="table-title">Checklist</div></div></div>
+          <table>
+            <caption class="sr-only">Situação de cada certidão exigida</caption>
+            <thead><tr><th scope="col">Resultado</th><th scope="col">Certidão</th><th scope="col">Situação</th>
+              <th scope="col">Validade</th><th scope="col">Observação</th><th scope="col">Arquivo</th></tr></thead>
+            <tbody id="res-itens"></tbody>
+          </table>
+        </div>
+        <div id="res-extras"></div>
+        <div id="res-solicitacao"></div>
+        <h2 class="h4 mt-5">Minuta</h2>
+        <details class="detalhe texto-solicitacao"><summary><span class="title" id="res-minuta-titulo">Minuta</span></summary>
+          <div class="content"><pre class="texto-minuta" id="res-minuta"></pre>
+            <button class="br-button secondary small mt-2" type="button" data-copiar="res-minuta"><i class="fas fa-copy" aria-hidden="true"></i>Copiar minuta</button></div></details>
+        <h2 class="h4 mt-5">Detalhes e conferência de autenticidade</h2>
+        <div id="res-detalhes"></div>
+        <details class="detalhe mt-4" id="csv-manual" hidden><summary><span class="title">Planilha de controle (CSV) para copiar</span></summary>
+          <div class="content"><pre class="texto-minuta" id="res-csv"></pre>
+            <button class="br-button secondary small mt-2" type="button" data-copiar="res-csv"><i class="fas fa-copy" aria-hidden="true"></i>Copiar planilha</button></div></details>
+        <p class="text-down-01 mt-4">O PDF é uma minuta: revise, confira a autenticidade e assine. Guarde a planilha de controle para o planejamento do próximo mês.</p>
+      </section>
+
+      <!-- ===================================================== PLANEJAR -->
+      <section class="vista" id="vista-planejar" aria-labelledby="t-planejar" hidden>
+        <h1 class="h2 mt-0" id="t-planejar">Planejar a emissão do mês</h1>
+        <p class="text-up-01 mb-3">Envie as planilhas de controle (CSV) das conferências anteriores. O sistema mostra, para cada contratada,
+          o que ainda está válido na data de corte e o que precisa ser emitido, para você resolver o mínimo de captchas numa só sessão.</p>
+        <div class="br-message info" role="note">
+          <div class="icon"><i class="fas fa-lightbulb fa-lg" aria-hidden="true"></i></div>
+          <div class="content">
+            <span class="message-title">Estratégia para resolver menos captchas</span>
+            <ol class="message-body estrategia mb-0">
+              <li><strong>Peça à contratada.</strong> A contratada deve manter a regularidade durante todo o contrato (Lei nº 14.133/2021, art. 92, XVI) e, quando o contrato prever, enviar as certidões com a nota fiscal.</li>
+              <li><strong>Use o SICAF.</strong> Uma consulta feita por você, na data do atesto, cobre federal, FGTS e trabalhista nos itens marcados "Automática".</li>
+              <li><strong>Emita só o que vence</strong> até a data de corte. O que ainda está válido fica para depois.</li>
+              <li><strong>Faça tudo numa sessão:</strong> CNPJ copiado, portais abertos em sequência, cada item marcado como feito.</li>
+            </ol>
+          </div>
+        </div>
+        <div class="br-message danger" role="alert" id="erros-planejar" hidden>
+          <div class="icon"><i class="fas fa-times-circle fa-lg" aria-hidden="true"></i></div>
+          <div class="content"><span class="message-title">Corrija os itens abaixo.</span><ul class="message-body mb-0" id="erros-planejar-lista"></ul></div>
+        </div>
+        <form id="form-planejar" novalidate>
+          <section class="secao" aria-labelledby="t-planilhas">
+            <h2 class="h4 secao-titulo" id="t-planilhas"><span class="numero">1</span>Planilhas de controle e data de corte</h2>
+            <div class="br-upload" id="upload-csv">
+              <label class="upload-label" for="csvs"><span>Planilhas de controle (CSV) baixadas no resultado da conferência</span></label>
+              <input class="upload-input" id="csvs" type="file" multiple accept=".csv,text/csv" aria-label="Enviar planilhas de controle em CSV">
+              <button class="upload-button" type="button" data-abrir="csvs"><i class="fas fa-upload" aria-hidden="true"></i><span>Selecione as planilhas (CSV) ou arraste-as para cá</span></button>
+              <div class="upload-list" id="csvs-lista"></div>
+            </div>
+            <p class="text-down-01 mt-1">Nada fica guardado: as planilhas são lidas e o plano é montado só nesta página.
+              <button class="br-button tertiary small" type="button" id="btn-exemplo-csv" disabled>Usar planilha de exemplo</button></p>
+            <div class="row mt-3">
+              <div class="col-md-3 mb-3"><div class="br-input">
+                <label for="ate">Data de corte</label>
+                <input id="ate" type="date" aria-describedby="ate-ajuda">
+                <span class="text-down-01 d-block mt-half" id="ate-ajuda">Precisa estar válida até esta data.</span>
+              </div></div>
+              <div class="col-md-6 mb-3"><div class="br-input">
+                <label for="orgao_plano">Órgão (vai no texto de solicitação)</label>
+                <input id="orgao_plano" type="text" placeholder="Ex.: Secretaria de Administração">
+              </div></div>
+              <div class="col-md-3 mb-3"><div class="br-input">
+                <label for="prazo">Prazo para a contratada (dias úteis)</label>
+                <input id="prazo" type="number" min="1" max="60" value="5">
+              </div></div>
+            </div>
+            <div class="br-checkbox">
+              <input id="aceitar_sicaf_plano" type="checkbox">
+              <label for="aceitar_sicaf_plano">Aceitar o SICAF para federal, FGTS e trabalhista de todas as contratadas</label>
+            </div>
+            <div class="d-flex justify-content-end mt-3">
+              <button class="br-button primary" type="submit" id="btn-planejar" disabled><i class="fas fa-tasks" aria-hidden="true"></i>Planejar o mutirão</button>
+            </div>
+          </section>
+        </form>
+        <section id="plano" aria-labelledby="t-plano" hidden></section>
+      </section>
+
+      <!-- ===================================================== COMO USAR -->
+      <section class="vista" id="vista-como-usar" aria-labelledby="t-como" hidden>
+        <h1 class="h2 mt-0" id="t-como">Como usar</h1>
+        <ol class="passos">
+          <li><strong>Preencha os dados do contrato</strong> e marque as certidões que o contrato exige.</li>
+          <li><strong>Busque as certidões:</strong> abra cada portal oficial listado, cole o CNPJ, resolva o captcha
+            (é você quem resolve; o sistema não contorna) e salve o PDF. Se a contratada já enviou as certidões, pule esta etapa.</li>
+          <li><strong>Envie todos os PDFs de uma vez</strong> e clique em <em>Conferir certidões</em>.</li>
+          <li><strong>Leia o semáforo:</strong>
+            <ul>
+              <li><span class="br-tag success status-tag"><i class="fas fa-check-circle" aria-hidden="true"></i><span>OK</span></span> certidão válida e do CNPJ do contrato;</li>
+              <li><span class="br-tag warning status-tag"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span>ATENÇÃO</span></span> aceita, mas vence em breve ou precisa de conferência manual;</li>
+              <li><span class="br-tag danger status-tag"><i class="fas fa-times-circle" aria-hidden="true"></i><span>PENDENTE</span></span> faltante, positiva, vencida ou de outra empresa.</li>
+            </ul></li>
+          <li><strong>Confira a autenticidade</strong> de cada certidão no site do emissor, pelo código de controle.</li>
+          <li><strong>Baixe o PDF:</strong> ele traz o checklist e a minuta (de atesto, se não houver pendências, ou de notificação à contratada, se houver). Revise, complete o prazo e assine.</li>
+          <li><strong>Guarde a planilha (CSV)</strong> e, no mês seguinte, use <a href="#planejar">Planejar emissão do mês</a> para emitir só o que vence.</li>
+        </ol>
+        <div class="br-message info" role="note">
+          <div class="icon"><i class="fas fa-info-circle fa-lg" aria-hidden="true"></i></div>
+          <div class="content"><span class="message-body">Os PDFs são lidos no seu navegador e não são enviados a lugar nenhum. A decisão de atestar é sempre do fiscal do contrato.
+            A consulta automática da CND federal pelo Conecta gov.br exige adesão do órgão e só funciona na versão instalada no servidor do órgão.</span></div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</main>
+
+<footer class="br-footer" id="rodape">
+  <div class="container-lg">
+    <div class="info">
+      <div class="text-down-01 text-medium py-3">
+        Ferramenta de apoio. O sistema aponta; a conferência e a decisão de atestar são do fiscal do contrato.
+        Portais com captcha são acessados pelo próprio servidor: o sistema não contorna captcha.
+        Os PDFs são lidos no seu navegador e não saem do seu computador.
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="py/pyodide.js"></script>
+<script src="texto_pdf.js"></script>
+<script src="pdf_atesto.js"></script>
+<script src="app.js"></script>

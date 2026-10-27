@@ -10,19 +10,23 @@ from datetime import date, datetime
 from typing import Optional
 from xml.sax.saxutils import escape
 
-from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-from reportlab.lib.units import cm
-from reportlab.platypus import (
-    KeepTogether,
-    Paragraph,
-    SimpleDocTemplate,
-    Spacer,
-    Table,
-    TableStyle,
-)
+try:  # reportlab é opcional: no navegador (Pyodide) só o CSV e as minutas são usados
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import cm
+    from reportlab.platypus import (
+        KeepTogether,
+        Paragraph,
+        SimpleDocTemplate,
+        Spacer,
+        Table,
+        TableStyle,
+    )
+    _REPORTLAB = True
+except ImportError:  # pragma: no cover
+    _REPORTLAB = False
 
 from .models import Certidao, ItemChecklist, ResultadoValidacao, Semaforo, TipoCertidao, formatar_cnpj
 from .validador import (
@@ -42,7 +46,7 @@ COR_SEMAFORO = {
     Semaforo.VERDE: colors.HexColor("#C8E6C9"),
     Semaforo.AMARELO: colors.HexColor("#FFF59D"),
     Semaforo.VERMELHO: colors.HexColor("#FFCDD2"),
-}
+} if _REPORTLAB else {}
 
 CHECKLIST_MANUAL = [
     "Certidões conferidas no site do emissor (código de controle).",

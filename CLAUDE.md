@@ -29,7 +29,9 @@ certidoes/
   atesto.py     ResultadoValidacao -> PDF (checklist + minuta de atesto)
   portais.py    catálogo de portais oficiais (data/portais.json)
   conecta.py    cliente da API Consulta CND (Conecta gov.br) — exige adesão do órgão
+  navegador.py  ponte JSON para a versão no navegador (sem reportlab, sem rede)
 web/            interface web no padrão gov.br DS (FastAPI) — deploy no Railway
+site/           versão estática no navegador (Pyodide + pdf.js), gov.br DS; `python site/build.py`
 app.py          interface Streamlit (legada)
 tests/          testes com PDFs sintéticos marcados "DOCUMENTO DE TESTE"
 docs/           roteiros e minutas (cláusula contratual, ofício, adesão Conecta)

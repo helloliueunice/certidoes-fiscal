@@ -1,0 +1,1 @@
+@govbr-ds/core 3.7.0 (MIT) — https://www.gov.br/ds

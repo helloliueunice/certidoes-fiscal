@@ -17,6 +17,16 @@ Apoio ao fiscal de contrato na conferência mensal das certidões de regularidad
 3. **Documentar** — gera PDF com checklist, roteiro de conferência de autenticidade e **minuta**
    de atesto (ou de notificação à contratada, se houver pendência), além de CSV de controle.
 
+## Versão no navegador (sem servidor)
+`site/` gera uma página estática que roda o mesmo pacote `certidoes` no navegador (Pyodide) e lê os
+PDFs com pdf.js: os arquivos não saem do computador de quem usa. Visual no padrão gov.br DS
+(CSS oficial 3.7.0, fonte Rawline e ícones Font Awesome 5, tudo embutido).
+```bash
+python site/build.py        # monta site/dist (baixa o Pyodide 0.27.7 via npm)
+```
+A paridade da leitura foi conferida nas 17 amostras (pdf.js x pdfplumber: mesmos resultados).
+A consulta ao Conecta gov.br não existe nessa versão (exige credenciais do órgão no servidor).
+
 ## Menos captchas, sem contornar
 - **SICAF:** marque "Aceitar o SICAF" e envie a declaração que *você* emitiu no Compras.gov.br na
   data do atesto. Itens "Automática" comprovam federal, FGTS e trabalhista sem abrir esses portais.
@@ -33,7 +43,7 @@ Apoio ao fiscal de contrato na conferência mensal das certidões de regularidad
 pip install -r requirements.txt
 uvicorn web.main:app --reload   # interface gov.br DS em http://localhost:8000
 streamlit run app.py            # interface antiga (Streamlit)
-python -m pytest -q           # 226 testes
+python -m pytest -q           # 234 testes
 python tests/gerar_amostras.py  # recria os PDFs de teste (fictícios)
 ```
 
