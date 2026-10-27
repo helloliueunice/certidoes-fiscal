@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block titulo %}Resultado — {{ NOME_SISTEMA }}{% endblock %}
+{% block conteudo %}
+{% set c = r.contrato %}
+<nav class="br-breadcrumb mb-3" aria-label="Breadcrumbs">
+  <ol class="crumb-list" role="list">
+    <li class="crumb home"><a class="br-button circle" href="/"><span class="sr-only">Página inicial</span><i class="fas fa-home"></i></a></li>
+    <li class="crumb"><i class="icon fas fa-chevron-right"></i><a href="/">Nova conferência</a></li>
+    <li class="crumb" data-active="active"><i class="icon fas fa-chevron-right"></i><span tabindex="0" aria-current="page">Resultado</span></li>
+  </ol>
+</nav>
+
+<div class="d-flex flex-wrap align-items-start justify-content-between">
+  <div>
+    <h1 class="h2 mt-0 mb-1">Resultado da conferência</h1>
+    <p class="text-up-01 mb-0">Contrato <strong>{{ c.numero }}</strong> · {{ c.razao_social }} · CNPJ {{ formatar_cnpj(c.cnpj) }}</p>
+    <p class="text-down-01">Sede: {{ c.municipio_sede }}/{{ c.uf_sede }}{% if c.competencia %} · Competência {{ c.competencia }}{% endif %} · Referência {{ formatar_data(r.data_referencia) }}</p>
+  </div>
+  <div class="d-flex flex-wrap acoes">
+    <a class="br-button primary mr-2 mb-2" href="/resultado/{{ chave }}/checklist.pdf"><i class="fas fa-file-pdf" aria-hidden="true"></i>Baixar checklist e minuta (PDF)</a>
+    <a class="br-button secondary mr-2 mb-2" href="/resultado/{{ chave }}/controle.csv"><i class="fas fa-file-csv" aria-hidden="true"></i>Planilha de controle (CSV)</a>
+    <a class="br-button tertiary mb-2" href="/"><i class="fas fa-redo" aria-hidden="true"></i>Nova conferência</a>
+  </div>
+</div>
+
+{% if r.apto_atesto %}
+<div class="br-message success" role="status">
+  <div class="icon"><i class="fas fa-check-circle fa-lg" aria-hidden="true"></i></div>
+  <div class="content"><span class="message-title">Nenhuma pendência impeditiva.</span>
+    <span class="message-body"> Confira os itens em atenção e a autenticidade de cada certidão antes de atestar. O PDF traz a minuta de atesto.</span></div>
+</div>
+{% else %}
+<div class="br-message danger" role="alert">
+  <div class="icon"><i class="fas fa-times-circle fa-lg" aria-hidden="true"></i></div>
+  <div class="content"><span class="message-title">Há pendências.</span>
+    <span class="message-body"> O PDF traz a minuta de notificação à contratada, com as pendências listadas.</span></div>
+</div>
+{% endif %}
+
+<div class="row resumo mb-4" aria-label="Resumo">
+  <div class="col-6 col-md-3 mb-2"><div class="br-card cartao success"><div class="card-content">
+    <span class="num">{{ resumo.verde }}</span><span class="rot"><i class="fas fa-check-circle" aria-hidden="true"></i> OK</span></div></div></div>
+  <div class="col-6 col-md-3 mb-2"><div class="br-card cartao warning"><div class="card-content">
+    <span class="num">{{ resumo.amarelo }}</span><span class="rot"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Atenção</span></div></div></div>
+  <div class="col-6 col-md-3 mb-2"><div class="br-card cartao danger"><div class="card-content">
+    <span class="num">{{ resumo.vermelho }}</span><span class="rot"><i class="fas fa-times-circle" aria-hidden="true"></i> Pendente</span></div></div></div>
+  <div class="col-6 col-md-3 mb-2"><div class="br-card cartao"><div class="card-content">
+    <span class="num">{{ resumo.extras }}</span><span class="rot"><i class="fas fa-folder-open" aria-hidden="true"></i> Outros documentos</span></div></div></div>
+</div>
+
+<div class="br-table" title="Checklist de certidões">
+  <div class="table-header"><div class="top-bar"><div class="table-title">Checklist</div></div></div>
+  <table>
+    <caption class="sr-only">Situação de cada certidão exigida</caption>
+    <thead><tr>
+      <th scope="col">Resultado</th><th scope="col">Certidão</th><th scope="col">Situação</th>
+      <th scope="col">Validade</th><th scope="col">Observação</th><th scope="col">Arquivo</th>
+    </tr></thead>
+    <tbody>
+    {% for i in r.itens %}{% set cert = i.certidao %}
+      <tr>
+        <td data-th="Resultado"><span class="br-tag {{ CLASSE_SEMAFORO[i.semaforo] }} status-tag"><i class="fas {{ ICONE_SEMAFORO[i.semaforo] }}" aria-hidden="true"></i><span>{{ ROTULO_SEMAFORO[i.semaforo] }}</span></span></td>
+        <td data-th="Certidão" class="text-medium">{{ i.tipo.rotulo }}</td>
+        <td data-th="Situação">{{ ROTULO_SITUACAO[cert.situacao] if cert else "—" }}</td>
+        <td data-th="Validade" class="text-nowrap">{{ formatar_data(cert.validade) if cert else "—" }}</td>
+        <td data-th="Observação">{{ i.mensagem }}</td>
+        <td data-th="Arquivo" class="arquivo">{{ cert.arquivo if cert else "—" }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if extras %}
+<h2 class="h4 mt-5">Outros documentos enviados</h2>
+{% for x in extras %}
+<div class="br-message {{ 'danger' if x.alerta else 'info' }}" role="{{ 'alert' if x.alerta else 'note' }}">
+  <div class="icon"><i class="fas {{ 'fa-exclamation-triangle' if x.alerta else 'fa-file-alt' }} fa-lg" aria-hidden="true"></i></div>
+  <div class="content"><span class="message-title">{{ x.cert.arquivo }} ({{ x.cert.tipo.rotulo }}).</span><span class="message-body"> {{ x.nota }}</span></div>
+</div>
+{% endfor %}
+{% endif %}
+
+<h2 class="h4 mt-5">Detalhes e conferência de autenticidade</h2>
+<div class="br-accordion" id="detalhes">
+{% for cert in certs %}
+  <details class="item detalhe">
+    <summary class="header">
+      <span class="title">{{ cert.arquivo }} — {{ cert.tipo.rotulo }}</span>
+      <span class="ml-auto text-down-01">{{ 'IA' if cert.metodo == 'ia' else 'Regras' }} · confiança {{ (cert.confianca * 100)|round|int }}%</span>
+    </summary>
+    <div class="content">
+      <dl class="campos">
+        <dt>Situação</dt><dd>{{ ROTULO_SITUACAO[cert.situacao] }}</dd>
+        <dt>CNPJ</dt><dd>{{ formatar_cnpj(cert.cnpj) or "não encontrado" }}</dd>
+        {% if cert.razao_social %}<dt>Razão social</dt><dd>{{ cert.razao_social }}</dd>{% endif %}
+        {% if cert.orgao_emissor %}<dt>Órgão emissor</dt><dd>{{ cert.orgao_emissor }}</dd>{% endif %}
+        {% if cert.uf or cert.municipio %}<dt>UF / município</dt><dd>{{ [cert.uf, cert.municipio]|select|join(" / ") }}</dd>{% endif %}
+        <dt>Emissão</dt><dd>{{ formatar_data(cert.data_emissao) or "—" }}</dd>
+        <dt>Validade</dt><dd>{{ formatar_data(cert.validade) or "—" }}</dd>
+        <dt>Código de controle</dt><dd>{{ cert.codigo_controle or "—" }}</dd>
+      </dl>
+      {% if cert.url_verificacao %}
+      <a class="br-button secondary small" href="{{ cert.url_verificacao }}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt" aria-hidden="true"></i>Conferir autenticidade no site do emissor</a>
+      {% endif %}
+      {% for a in cert.avisos %}
+      <span class="feedback warning d-flex mt-2" role="status"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i>{{ a }}</span>
+      {% endfor %}
+    </div>
+  </details>
+{% endfor %}
+</div>
+
+<p class="text-down-01 mt-4">O PDF é uma minuta: revise, confira a autenticidade e assine. Este resultado fica disponível por até 2 horas.</p>
+{% endblock %}

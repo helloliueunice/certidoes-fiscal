@@ -20,10 +20,22 @@ Apoio ao fiscal de contrato na conferência mensal das certidões de regularidad
 ## Como rodar
 ```bash
 pip install -r requirements.txt
-streamlit run app.py          # abre no navegador
+uvicorn web.main:app --reload   # interface gov.br DS em http://localhost:8000
+streamlit run app.py            # interface antiga (Streamlit)
 python -m pytest -q           # 119 testes
 python tests/gerar_amostras.py  # recria os PDFs de teste (fictícios)
 ```
+
+## Publicar no Railway
+1. Em railway.com, **New Project → Deploy from GitHub repo** e escolha este repositório.
+2. O Railway lê `railway.json`: instala `requirements.txt` (Python 3.12) e roda
+   `uvicorn web.main:app` com verificação de saúde em `/saude`.
+3. Em **Settings → Networking**, clique em **Generate Domain** para ter o link público.
+4. Opcional, em **Variables**: `SISTEMA_NOME`, `SISTEMA_SUBTITULO`, `MAX_ARQUIVOS`,
+   `MAX_MB_POR_ARQUIVO` e as variáveis abaixo.
+
+A interface web (`web/`) usa o CSS oficial do Padrão Digital de Governo
+(`@govbr-ds/core` 3.7.0, licença MIT) e a fonte Rawline, sem a marca gov.br.
 
 ## Configuração opcional (variáveis de ambiente)
 | Variável | Para quê |

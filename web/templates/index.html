@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<nav class="br-breadcrumb mb-3" aria-label="Breadcrumbs">
+  <ol class="crumb-list" role="list">
+    <li class="crumb home"><a class="br-button circle" href="/"><span class="sr-only">Página inicial</span><i class="fas fa-home"></i></a></li>
+    <li class="crumb" data-active="active"><i class="icon fas fa-chevron-right"></i><span tabindex="0" aria-current="page">Nova conferência</span></li>
+  </ol>
+</nav>
+
+<h1 class="h2 mt-0">Conferir certidões de regularidade</h1>
+<p class="text-up-01 mb-4">Informe os dados do contrato, busque as certidões nos portais oficiais e envie os PDFs.
+  O sistema monta o checklist e a minuta para o seu atesto.</p>
+
+{% if erros %}
+<div class="br-message danger" role="alert">
+  <div class="icon"><i class="fas fa-times-circle fa-lg" aria-hidden="true"></i></div>
+  <div class="content">
+    <span class="message-title">Corrija os itens abaixo.</span>
+    <ul class="message-body mb-0">{% for e in erros %}<li>{{ e }}</li>{% endfor %}</ul>
+  </div>
+</div>
+{% endif %}
+
+{% if ia_ligada %}
+<div class="br-message warning" role="status">
+  <div class="icon"><i class="fas fa-exclamation-triangle fa-lg" aria-hidden="true"></i></div>
+  <div class="content"><span class="message-title">IA ligada.</span><span class="message-body"> {{ AVISO_IA_LGPD }}</span></div>
+</div>
+{% endif %}
+
+<form id="form-conferir" method="post" action="/conferir" enctype="multipart/form-data" novalidate>
+
+  <!-- 1. Contrato -->
+  <section class="secao" aria-labelledby="t-contrato">
+    <h2 class="h4 secao-titulo" id="t-contrato"><span class="numero">1</span>Dados do contrato</h2>
+    <div class="row">
+      <div class="col-md-4 mb-3"><div class="br-input">
+        <label for="numero">Nº do contrato</label>
+        <input id="numero" name="numero" type="text" value="{{ v.numero }}" placeholder="Ex.: 012/2026" required>
+      </div></div>
+      <div class="col-md-4 mb-3"><div class="br-input" id="campo-cnpj">
+        <label for="cnpj">CNPJ da contratada</label>
+        <input id="cnpj" name="cnpj" type="text" inputmode="numeric" value="{{ v.cnpj }}" placeholder="00.000.000/0000-00" maxlength="18" required aria-describedby="cnpj-ajuda">
+        <span class="feedback" id="cnpj-ajuda" role="status" hidden></span>
+      </div></div>
+      <div class="col-md-4 mb-3"><div class="br-input">
+        <label for="competencia">Competência (mês/ano)</label>
+        <input id="competencia" name="competencia" type="text" value="{{ v.competencia }}" placeholder="MM/AAAA">
+      </div></div>
+      <div class="col-md-8 mb-3"><div class="br-input">
+        <label for="razao_social">Razão social</label>
+        <input id="razao_social" name="razao_social" type="text" value="{{ v.razao_social }}" required>
+      </div></div>
+      <div class="col-md-4 mb-3"><div class="br-input">
+        <label for="fiscal">Fiscal do contrato</label>
+        <input id="fiscal" name="fiscal" type="text" value="{{ v.fiscal }}">
+      </div></div>
+      <div class="col-md-2 mb-3"><div class="br-input">
+        <label for="uf">UF da sede</label>
+        <select id="uf" name="uf" class="select-nativo">
+          {% for u in ufs %}<option value="{{ u }}" {% if u == v.uf %}selected{% endif %}>{{ u }}</option>{% endfor %}
+        </select>
+      </div></div>
+      <div class="col-md-6 mb-3"><div class="br-input">
+        <label for="municipio">Município da sede</label>
+        <input id="municipio" name="municipio" type="text" value="{{ v.municipio }}" placeholder="Ex.: São Paulo" required>
+      </div></div>
+      <div class="col-md-4 mb-3"><div class="br-input">
+        <label for="orgao">Órgão (aparece no PDF)</label>
+        <input id="orgao" name="orgao" type="text" value="{{ v.orgao }}">
+      </div></div>
+    </div>
+
+    <fieldset class="mt-2">
+      <legend class="label mb-1">Certidões exigidas no contrato</legend>
+      <div class="d-flex flex-wrap gap-checks">
+        {% for t in tipos %}
+        <div class="br-checkbox mr-4 mb-2">
+          <input id="exig-{{ t.value }}" name="exigidas" type="checkbox" value="{{ t.value }}" {% if t.value in v.exigidas %}checked{% endif %}>
+          <label for="exig-{{ t.value }}">{{ t.rotulo }}</label>
+        </div>
+        {% endfor %}
+      </div>
+    </fieldset>
+    <div class="row mt-2">
+      <div class="col-md-4"><div class="br-input">
+        <label for="dias_alerta">Avisar quando faltar até (dias) para vencer</label>
+        <input id="dias_alerta" name="dias_alerta" type="number" min="0" max="90" value="{{ v.dias_alerta }}">
+      </div></div>
+    </div>
+  </section>
+
+  <!-- 2. Portais -->
+  <section class="secao" aria-labelledby="t-portais">
+    <h2 class="h4 secao-titulo" id="t-portais"><span class="numero">2</span>Buscar certidões nos portais oficiais</h2>
+    <div class="br-message info" role="note">
+      <div class="icon"><i class="fas fa-info-circle fa-lg" aria-hidden="true"></i></div>
+      <div class="content"><span class="message-title">Captcha é com você.</span>
+        <span class="message-body"> Abra cada portal, cole o CNPJ e salve o PDF. Se a contratada já enviou as certidões, pule esta etapa.</span></div>
+    </div>
+    <div id="cnpj-copiar" class="mb-3" hidden>
+      <span class="text-medium mr-2">CNPJ para colar:</span>
+      <span class="br-tag" id="cnpj-mascara"></span>
+      <button class="br-button small secondary ml-1" type="button" data-copiar="cnpj-mascara"><i class="fas fa-copy" aria-hidden="true"></i>Copiar</button>
+      <span class="br-tag ml-2" id="cnpj-numeros"></span>
+      <button class="br-button small secondary ml-1" type="button" data-copiar="cnpj-numeros"><i class="fas fa-copy" aria-hidden="true"></i>Só números</button>
+    </div>
+    <div id="lista-portais" class="br-list" role="list" aria-live="polite">
+      <p class="text-down-01 m-0 p-2">Informe a UF e o município da sede para ver os portais.</p>
+    </div>
+
+    <div class="mt-3">
+      <h3 class="h5">Certidão federal pela API oficial (Conecta gov.br)</h3>
+      {% if conecta_ok %}
+        <button class="br-button secondary" type="button" id="btn-conecta"><i class="fas fa-cloud-download-alt" aria-hidden="true"></i>Consultar CND federal via Conecta</button>
+        <pre id="resp-conecta" class="mt-2" hidden></pre>
+      {% else %}
+        <p class="text-down-01">A consulta automática, sem captcha, exige adesão do órgão à API Consulta CND do Conecta gov.br.
+          <a href="{{ DOC_CONECTA }}" target="_blank" rel="noopener">Saiba mais</a>.</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- 3. Envio -->
+  <section class="secao" aria-labelledby="t-envio">
+    <h2 class="h4 secao-titulo" id="t-envio"><span class="numero">3</span>Enviar os PDFs e conferir</h2>
+    <div class="br-upload" id="upload">
+      <label class="upload-label" for="arquivos"><span>Certidões em PDF (até {{ max_arquivos }} arquivos, {{ max_mb }} MB cada)</span></label>
+      <input class="upload-input" id="arquivos" name="arquivos" type="file" multiple accept="application/pdf,.pdf" aria-label="Enviar certidões em PDF">
+      <div class="upload-list" id="upload-lista"></div>
+    </div>
+    <p class="text-down-01 mt-1">Clique ou arraste os arquivos para a área acima. Pode enviar todos de uma vez.</p>
+
+    <div class="br-textarea mt-3">
+      <label for="observacoes">Observações do fiscal (vão para o PDF)</label>
+      <textarea id="observacoes" name="observacoes" rows="3">{{ v.observacoes }}</textarea>
+    </div>
+
+    <div class="d-flex justify-content-end mt-4">
+      <button class="br-button primary" type="submit" id="btn-conferir"><i class="fas fa-clipboard-check" aria-hidden="true"></i>Conferir certidões</button>
+    </div>
+  </section>
+</form>
+{% endblock %}
+{% block scripts %}<script src="/static/app.js"></script>{% endblock %}

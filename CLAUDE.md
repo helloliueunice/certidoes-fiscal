@@ -29,7 +29,8 @@ certidoes/
   atesto.py     ResultadoValidacao -> PDF (checklist + minuta de atesto)
   portais.py    catálogo de portais oficiais (data/portais.json)
   conecta.py    cliente da API Consulta CND (Conecta gov.br) — exige adesão do órgão
-app.py          interface Streamlit
+web/            interface web no padrão gov.br DS (FastAPI) — deploy no Railway
+app.py          interface Streamlit (legada)
 tests/          testes com PDFs sintéticos marcados "DOCUMENTO DE TESTE"
 docs/           roteiros e minutas (cláusula contratual, ofício, adesão Conecta)
 ```
@@ -47,7 +48,7 @@ docs/           roteiros e minutas (cláusula contratual, ofício, adesão Conec
 - CNPJ sempre armazenado só com dígitos; formatar só na exibição.
 - Datas como `datetime.date`; texto de PDF em formato brasileiro (dd/mm/aaaa).
 - Testes: `python -m pytest -q`.
-- App: `streamlit run app.py`.
+- App: `uvicorn web.main:app --reload` (gov.br DS) ou `streamlit run app.py` (legada).
 
 ## Agentes do projeto (.claude/agents)
 - `especialista-contratacoes` — regras de negócio, Lei 14.133, checklist e minutas

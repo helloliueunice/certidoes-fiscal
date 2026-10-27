@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}{{ NOME_SISTEMA }}{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdngovbr-ds.estaleiro.serpro.gov.br/design-system/fonts/rawline/css/rawline.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="/static/govbr-ds/core.min.css">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <nav class="br-skiplink">
+    <a class="br-item" href="#conteudo" accesskey="1">Ir para o conteúdo <span class="br-tag text ml-1">1</span></a>
+    <a class="br-item" href="#rodape" accesskey="2">Ir para o rodapé <span class="br-tag text ml-1">2</span></a>
+  </nav>
+
+  <header class="br-header compact" id="cabecalho">
+    <div class="container-lg">
+      <div class="header-top">
+        <div class="header-logo">
+          <span class="marca" aria-hidden="true"><i class="fas fa-clipboard-check"></i></span>
+          <span class="br-divider vertical"></span>
+          <div class="header-sign">{{ SUBTITULO }}</div>
+        </div>
+        <div class="header-actions">
+          <div class="header-links">
+            <a class="br-button small secondary" href="/como-usar"><i class="fas fa-question-circle" aria-hidden="true"></i>Como usar</a>
+          </div>
+        </div>
+      </div>
+      <div class="header-bottom">
+        <div class="header-menu">
+          <div class="header-info">
+            <div class="header-title"><a href="/" class="titulo-link">{{ NOME_SISTEMA }}</a></div>
+            <div class="header-subtitle">Certidões de regularidade para atesto de contratos públicos</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="d-flex flex-fill mb-5" id="conteudo">
+    <div class="container-lg d-flex">
+      <div class="col pt-3 pt-md-4">
+        {% block conteudo %}{% endblock %}
+      </div>
+    </div>
+  </main>
+
+  <footer class="br-footer" id="rodape">
+    <div class="container-lg">
+      <div class="info">
+        <div class="text-down-01 text-medium py-3">
+          Ferramenta de apoio. O sistema aponta; a conferência e a decisão de atestar são do fiscal do contrato.
+          Portais com captcha são acessados pelo próprio servidor — o sistema não contorna captcha.
+          Os PDFs enviados são lidos e descartados; o resultado fica disponível por até 2 horas.
+        </div>
+      </div>
+    </div>
+  </footer>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

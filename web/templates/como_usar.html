@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block titulo %}Como usar — {{ NOME_SISTEMA }}{% endblock %}
+{% block conteudo %}
+<nav class="br-breadcrumb mb-3" aria-label="Breadcrumbs">
+  <ol class="crumb-list" role="list">
+    <li class="crumb home"><a class="br-button circle" href="/"><span class="sr-only">Página inicial</span><i class="fas fa-home"></i></a></li>
+    <li class="crumb" data-active="active"><i class="icon fas fa-chevron-right"></i><span tabindex="0" aria-current="page">Como usar</span></li>
+  </ol>
+</nav>
+<h1 class="h2 mt-0">Como usar</h1>
+<div class="texto">
+<ol class="passos">
+  <li><strong>Preencha os dados do contrato</strong> e marque as certidões que o contrato exige.</li>
+  <li><strong>Busque as certidões:</strong> abra cada portal oficial listado, cole o CNPJ, resolva o captcha
+    (é você quem resolve; o sistema não contorna) e salve o PDF. Se a contratada já enviou as certidões, pule esta etapa.</li>
+  <li><strong>Envie todos os PDFs de uma vez</strong> e clique em <em>Conferir certidões</em>.</li>
+  <li><strong>Leia o semáforo:</strong>
+    <ul>
+      <li><span class="br-tag success status-tag"><i class="fas fa-check-circle" aria-hidden="true"></i><span>OK</span></span> certidão válida e do CNPJ do contrato;</li>
+      <li><span class="br-tag warning status-tag"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span>ATENÇÃO</span></span> aceita, mas vence em breve ou precisa de conferência manual;</li>
+      <li><span class="br-tag danger status-tag"><i class="fas fa-times-circle" aria-hidden="true"></i><span>PENDENTE</span></span> faltante, positiva, vencida ou de outra empresa.</li>
+    </ul></li>
+  <li><strong>Confira a autenticidade</strong> de cada certidão no site do emissor, pelo código de controle.</li>
+  <li><strong>Baixe o PDF:</strong> ele traz o checklist e a minuta — de atesto, se não houver pendências, ou de notificação à contratada, se houver. Revise, complete o prazo e assine.</li>
+  <li><strong>Guarde o CSV</strong> para o controle mensal e junte os documentos ao processo.</li>
+</ol>
+<div class="br-message info" role="note">
+  <div class="icon"><i class="fas fa-info-circle fa-lg" aria-hidden="true"></i></div>
+  <div class="content"><span class="message-body">Os PDFs são lidos e descartados logo em seguida. A decisão de atestar é sempre do fiscal do contrato.</span></div>
+</div>
+</div>
+<a class="br-button primary" href="/"><i class="fas fa-arrow-left" aria-hidden="true"></i>Voltar</a>
+{% endblock %}

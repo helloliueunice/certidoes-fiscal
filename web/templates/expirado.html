@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<div class="br-message warning" role="alert">
+  <div class="icon"><i class="fas fa-exclamation-triangle fa-lg" aria-hidden="true"></i></div>
+  <div class="content"><span class="message-title">Resultado não encontrado.</span>
+    <span class="message-body"> Por segurança, os resultados ficam disponíveis por até 2 horas e somem quando o serviço reinicia. Refaça a conferência.</span></div>
+</div>
+<a class="br-button primary" href="/"><i class="fas fa-redo" aria-hidden="true"></i>Nova conferência</a>
+{% endblock %}
