@@ -1,0 +1,1029 @@
+{
+ "versao": "2026.10.27-1",
+ "atualizado_em": "2026-10-27",
+ "aviso": "Catálogo de links oficiais. Portais com captcha são acessados manualmente pelo fiscal. Itens com verificado_em null precisam de confirmação.",
+ "federais": [
+  {
+   "id": "rfb_pgfn_cnd",
+   "nome": "Certidão de Débitos Relativos a Créditos Tributários Federais e à Dívida Ativa da União (CND/CPEN)",
+   "tipo": "federal",
+   "orgao": "Receita Federal / PGFN",
+   "url": "https://servicos.receita.fazenda.gov.br/Servicos/certidao/",
+   "url_verificacao": "https://servicos.receita.fazenda.gov.br/Servicos/certidao/CertAut/AutPJ.asp",
+   "captcha": true,
+   "validade_tipica_dias": 180,
+   "observacao": "Emissão também pela página de serviço https://www.gov.br/pt-br/servicos/emitir-certidao-de-regularidade-fiscal. Para matriz e filiais (abrangência pela raiz do CNPJ). Canal automatizável oficial: API Consulta CND (Conecta gov.br).",
+   "verificado_em": "2026-10-27",
+   "fonte": "https://www.gov.br/pt-br/servicos/emitir-certidao-de-regularidade-fiscal"
+  },
+  {
+   "id": "rfb_pgfn_cnd_verificacao",
+   "nome": "Confirmação de autenticidade da CND federal",
+   "tipo": "federal",
+   "orgao": "Receita Federal / PGFN",
+   "url": "https://servicos.receita.fazenda.gov.br/Servicos/certidao/CertAut/AutPJ.asp",
+   "url_verificacao": "https://servicos.receita.fazenda.gov.br/Servicos/certidao/CertAut/AutPJ.asp",
+   "captcha": null,
+   "validade_tipica_dias": null,
+   "observacao": "Página de serviço: https://www.gov.br/pt-br/servicos/consultar-certidoes-emitidas-pela-receita-federal-e-ou-procuradoria-geral-da-fazenda-nacional",
+   "verificado_em": "2026-10-27",
+   "fonte": "https://www.gov.br/pt-br/servicos/consultar-certidoes-emitidas-pela-receita-federal-e-ou-procuradoria-geral-da-fazenda-nacional"
+  },
+  {
+   "id": "caixa_crf",
+   "nome": "Certificado de Regularidade do FGTS (CRF) — Consulta Regularidade do Empregador",
+   "tipo": "fgts",
+   "orgao": "Caixa Econômica Federal",
+   "url": "https://consulta-crf.caixa.gov.br/consultacrf/pages/consultaEmpregador.jsf",
+   "url_verificacao": "https://consulta-crf.caixa.gov.br/consultacrf/pages/consultaEmpregador.jsf",
+   "captcha": true,
+   "validade_tipica_dias": 30,
+   "observacao": "A autenticidade do CRF é conferida no mesmo sistema (consulta pelo CNPJ/número do certificado). Dúvidas: https://consulta-crf.caixa.gov.br/consultacrf/pages/duvidasfrequentes.jsf",
+   "verificado_em": "2026-10-27",
+   "fonte": "https://consulta-crf.caixa.gov.br/consultacrf/pages/consultaEmpregador.jsf"
+  },
+  {
+   "id": "tst_cndt",
+   "nome": "Certidão Negativa de Débitos Trabalhistas (CNDT) — emissão e validação",
+   "tipo": "trabalhista",
+   "orgao": "Tribunal Superior do Trabalho",
+   "url": "https://www.tst.jus.br/en/web/acesso-a-informacao/carta-de-servicos-a-cidadania/servicos-processuais/cndt",
+   "url_verificacao": "https://www.tst.jus.br/en/web/acesso-a-informacao/carta-de-servicos-a-cidadania/servicos-processuais/cndt",
+   "captcha": true,
+   "validade_tipica_dias": 180,
+   "observacao": "Página da Carta de Serviços do TST, que remete ao sistema de emissão e de validação da CNDT. Link profundo do sistema de emissão não confirmado nesta revisão; usar a página de serviço.",
+   "verificado_em": "2026-10-27",
+   "fonte": "https://www.tst.jus.br/en/web/acesso-a-informacao/carta-de-servicos-a-cidadania/servicos-processuais/cndt"
+  },
+  {
+   "id": "sicaf_consulta",
+   "nome": "SICAF — Consulta da situação do fornecedor (Compras.gov.br)",
+   "tipo": "sicaf",
+   "orgao": "Ministério da Gestão e da Inovação em Serviços Públicos (Compras.gov.br)",
+   "url": "https://www.gov.br/compras/pt-br/acesso-a-informacao/perguntas-frequentes/sicaf-sistema/sicaf-sistema",
+   "url_verificacao": null,
+   "captcha": null,
+   "validade_tipica_dias": null,
+   "observacao": "Consulta pelo servidor no Compras.gov.br (perfil governo). Tutorial oficial: https://tutoriais.comprasgovernamentais.gov.br/sicaf_governo/html/demo_7.html. A declaração do SICAF reúne níveis de regularidade (federal, FGTS, trabalhista, estadual/municipal se cadastrados).",
+   "verificado_em": "2026-10-27",
+   "fonte": "https://tutoriais.comprasgovernamentais.gov.br/sicaf_governo/html/demo_7.html"
+  },
+  {
+   "id": "cgu_certidoes",
+   "nome": "CGU — Certidão negativa correcional / consolidada de pessoa jurídica (ePAD, CGU-PJ, CEIS, CNEP, CEPIM)",
+   "tipo": "outra",
+   "orgao": "Controladoria-Geral da União",
+   "url": "https://certidoes.cgu.gov.br/",
+   "url_verificacao": null,
+   "captcha": null,
+   "validade_tipica_dias": null,
+   "observacao": "Endereço do sistema citado pelo pedido e por certidões publicadas, mas não confirmado diretamente em página oficial nesta revisão. Página de serviço confirmada: https://www.gov.br/pt-br/servicos/obter-certidao-de-antecedentes-em-processo-correcional-instaurado-pela-controladoria-geral-da-uniao Confirmar link.",
+   "verificado_em": null,
+   "fonte": "https://www.gov.br/corregedorias/pt-br/assuntos/sistemas-correcionais/sistema-de-certidoes-da-controladoria-geral-da-uniao"
+  },
+  {
+   "id": "transparencia_ceis_cnep",
+   "nome": "Portal da Transparência — Sanções (CEIS e CNEP)",
+   "tipo": "outra",
+   "orgao": "Controladoria-Geral da União",
+   "url": "https://portaldatransparencia.gov.br/sancoes",
+   "url_verificacao": null,
+   "captcha": null,
+   "validade_tipica_dias": null,
+   "observacao": "Consulta de empresas inidôneas/suspensas (CEIS) e punidas (CNEP). Não emite certidão; para certidão usar o sistema de certidões da CGU.",
+   "verificado_em": "2026-10-27",
+   "fonte": "https://portaldatransparencia.gov.br/sancoes"
+  },
+  {
+   "id": "tcu_inidoneos",
+   "nome": "TCU — Certidão de licitantes inidôneos",
+   "tipo": "outra",
+   "orgao": "Tribunal de Contas da União",
+   "url": "https://certidoes.apps.tcu.gov.br/emitir-certidao-inidoneos",
+   "url_verificacao": "https://certidoes.apps.tcu.gov.br/",
+   "captcha": null,
+   "validade_tipica_dias": null,
+   "observacao": "Carta de serviços: https://portal.tcu.gov.br/carta-de-servicos/certidoes/certidao-de-licitantes-inidoneos",
+   "verificado_em": "2026-10-27",
+   "fonte": "https://portal.tcu.gov.br/carta-de-servicos/certidoes/certidao-de-licitantes-inidoneos"
+  },
+  {
+   "id": "cnj_improbidade",
+   "nome": "CNJ — Cadastro Nacional de Condenações Cíveis por Ato de Improbidade Administrativa e Inelegibilidade",
+   "tipo": "outra",
+   "orgao": "Conselho Nacional de Justiça",
+   "url": "https://www.cnj.jus.br/improbidade_adm/consultar_requerido.php",
+   "url_verificacao": null,
+   "captcha": null,
+   "validade_tipica_dias": null,
+   "observacao": "Consulta pública por nome/CPF/CNPJ do requerido.",
+   "verificado_em": "2026-10-27",
+   "fonte": "https://www.cnj.jus.br/improbidade_adm/consultar_requerido.php"
+  }
+ ],
+ "estaduais": {
+  "AC": [
+   {
+    "id": "ac_sefaz",
+    "nome": "Certidão Negativa de Débito — SEFAZ/AC",
+    "tipo": "estadual",
+    "orgao": "Secretaria de Estado da Fazenda do Acre",
+    "url": "https://www.ac.gov.br/servico/certidao-negativa-de-debito-sefaz",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://www.ac.gov.br/servico/certidao-negativa-de-debito-sefaz"
+   },
+   {
+    "id": "ac_pge",
+    "nome": "Certidão Negativa de Débitos — PGE/AC (dívida ativa)",
+    "tipo": "estadual",
+    "orgao": "Procuradoria-Geral do Estado do Acre",
+    "url": "https://www.ac.gov.br/servico/certidao-negativa-de-debitos-pge",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://www.ac.gov.br/servico/certidao-negativa-de-debitos-pge"
+   }
+  ],
+  "AL": [
+   {
+    "id": "al_sefaz",
+    "nome": "Certidão Negativa de Débitos — SEFAZ/AL",
+    "tipo": "estadual",
+    "orgao": "Secretaria de Estado da Fazenda de Alagoas",
+    "url": "https://alagoasdigital.al.gov.br/servico/79",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://alagoasdigital.al.gov.br/servico/79"
+   },
+   {
+    "id": "al_divida_ativa",
+    "nome": "Certidão Negativa de Dívida Ativa — AL",
+    "tipo": "estadual",
+    "orgao": "Procuradoria-Geral do Estado de Alagoas",
+    "url": "https://alagoasdigital.al.gov.br/servico/2139",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Serviço no portal Alagoas Digital; confirmar se a dívida ativa já está abrangida pela CND da SEFAZ.",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://alagoasdigital.al.gov.br/servico/2139"
+   }
+  ],
+  "AP": [
+   {
+    "id": "ap_sefaz",
+    "nome": "Certidão Negativa de Débitos — SEFAZ/AP",
+    "tipo": "estadual",
+    "orgao": "Secretaria de Estado da Fazenda do Amapá",
+    "url": "https://sefaz.portal.ap.gov.br/",
+    "url_verificacao": "https://virtual.sefaz.ap.gov.br/sefazvirtual/2018-01-15-12-35-03/cnd-validar-2",
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Página inicial da SEFAZ/AP (acessar o serviço de certidão). A certidão é emitida em conjunto pela PGE e SEFAZ.",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://sefaz.portal.ap.gov.br/"
+   }
+  ],
+  "AM": [
+   {
+    "id": "am_sefaz",
+    "nome": "Certidão Negativa de Débitos Estaduais — SEFAZ/AM",
+    "tipo": "estadual",
+    "orgao": "Secretaria de Estado da Fazenda do Amazonas",
+    "url": "https://www.sefaz.am.gov.br/portfolio-servicos/detalhes/541",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Página localizada refere-se a não contribuinte do ICMS; contribuintes acessam pelo portfólio de serviços da SEFAZ/AM. Confirmar se a dívida ativa (PGE/AM) exige certidão separada.",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://www.sefaz.am.gov.br/portfolio-servicos/detalhes/541"
+   }
+  ],
+  "BA": [
+   {
+    "id": "ba_sefaz",
+    "nome": "Certidão de Débitos Tributários — SEFAZ/BA",
+    "tipo": "estadual",
+    "orgao": "Secretaria da Fazenda da Bahia",
+    "url": "https://www.sefaz.ba.gov.br/inspetoria-eletronica/icms/certidoes/informacoes/",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://www.sefaz.ba.gov.br/inspetoria-eletronica/icms/certidoes/informacoes/"
+   },
+   {
+    "id": "ba_pge",
+    "nome": "Certidão de regularidade — Dívida Ativa PGE/BA",
+    "tipo": "estadual",
+    "orgao": "Procuradoria-Geral do Estado da Bahia",
+    "url": "https://dividaativa.pge.ba.gov.br/portal-divida-ativa/portal/certidao-regularidade",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://dividaativa.pge.ba.gov.br/portal-divida-ativa/portal/certidao-regularidade"
+   }
+  ],
+  "CE": [
+   {
+    "id": "ce_sefaz",
+    "nome": "Certidão Negativa de Débitos Estaduais — SEFAZ/CE",
+    "tipo": "estadual",
+    "orgao": "Secretaria da Fazenda do Ceará",
+    "url": "https://consultapublica.sefaz.ce.gov.br/certidaonegativa/",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Endereço visto em certidões publicadas em sítios .ce.gov.br; não confirmado em página da SEFAZ/CE. Há também certidão da PGE/CE (dívida ativa). Confirmar link.",
+    "verificado_em": null,
+    "fonte": "https://menu-servicos.sefaz.ce.gov.br/consulta"
+   }
+  ],
+  "DF": [
+   {
+    "id": "df_economia",
+    "nome": "Certidão de Débitos — Receita do DF (Secretaria de Estado de Economia)",
+    "tipo": "estadual",
+    "orgao": "Secretaria de Estado de Economia do Distrito Federal",
+    "url": "https://www.receita.fazenda.df.gov.br/aplicacoes/CartaServicos/servico.cfm?codServico=313&codTipoPessoa=6&codCategoriaServico=11&codSubCategoria=71",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Carta de serviços da Receita do DF. No DF a mesma certidão abrange tributos distritais (ICMS e ISS).",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://www.receita.fazenda.df.gov.br/aplicacoes/CartaServicos/servico.cfm?codServico=313&codTipoPessoa=6&codCategoriaServico=11&codSubCategoria=71"
+   }
+  ],
+  "ES": [
+   {
+    "id": "es_sefaz",
+    "nome": "Certidão Negativa de Débitos para com a Fazenda Pública Estadual — SEFAZ/ES",
+    "tipo": "estadual",
+    "orgao": "Secretaria de Estado da Fazenda do Espírito Santo",
+    "url": "https://internet.sefaz.es.gov.br/agenciavirtual/area_publica/cnd/emissao.php",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Página de orientação: https://sefaz.es.gov.br/emissao-de-certidoes. Dívida ativa: https://dividaativa.pge.es.gov.br/portal",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://sefaz.es.gov.br/emissao-de-certidoes"
+   }
+  ],
+  "GO": [
+   {
+    "id": "go_economia",
+    "nome": "Certidão Negativa de Débitos — Secretaria da Economia/GO",
+    "tipo": "estadual",
+    "orgao": "Secretaria de Estado da Economia de Goiás",
+    "url": "https://www.go.gov.br/servicos-digitais/economia/emitir-certidao-negativa-de-debitos",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://www.go.gov.br/servicos-digitais/economia/emitir-certidao-negativa-de-debitos"
+   }
+  ],
+  "MA": [
+   {
+    "id": "ma_sefaz",
+    "nome": "Certidão Negativa de Débitos — SEFAZ/MA",
+    "tipo": "estadual",
+    "orgao": "Secretaria de Estado da Fazenda do Maranhão",
+    "url": "http://sistemas.sefaz.ma.gov.br/sco/portal/",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Portal de serviços da SEFAZ/MA. O Maranhão também emite Certidão Negativa de Dívida Ativa (PGE/MA); links reunidos em https://www.cultura.ma.gov.br/programas-ou-campanhas/links-para-emissao-de-certidoes",
+    "verificado_em": "2026-10-27",
+    "fonte": "http://sistemas.sefaz.ma.gov.br/sco/portal/"
+   }
+  ],
+  "MT": [
+   {
+    "id": "mt_sefaz_pge",
+    "nome": "Certidão Negativa de Débitos — SEFAZ/PGE-MT",
+    "tipo": "estadual",
+    "orgao": "Secretaria de Fazenda e Procuradoria-Geral do Estado de Mato Grosso",
+    "url": "https://portal.mt.gov.br/catalog/emitir-certidao-negativa-de-debitos-e-de-relatorio-de-dividas-e-pendencias-fiscais",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Certidão conjunta SEFAZ/PGE. Página da PGE: https://www.pge.mt.gov.br/en/emitir-certid%C3%A3o-negativa-de-d%C3%A9bitos",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://portal.mt.gov.br/catalog/emitir-certidao-negativa-de-debitos-e-de-relatorio-de-dividas-e-pendencias-fiscais"
+   }
+  ],
+  "MS": [
+   {
+    "id": "ms_sefaz",
+    "nome": "Certidão Tributária Estadual — SEFAZ/MS",
+    "tipo": "estadual",
+    "orgao": "Secretaria de Estado de Fazenda de Mato Grosso do Sul",
+    "url": "https://www.sefaz.ms.gov.br/servicos-em-destaque/certidao-tributaria-estadual-emissao-certidao-negativa-de-debitos-estaduais-2/",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://www.sefaz.ms.gov.br/servicos-em-destaque/certidao-tributaria-estadual-emissao-certidao-negativa-de-debitos-estaduais-2/"
+   }
+  ],
+  "MG": [
+   {
+    "id": "mg_sef",
+    "nome": "Certidão de Débitos Tributários (CDT) — SEF/MG",
+    "tipo": "estadual",
+    "orgao": "Secretaria de Estado de Fazenda de Minas Gerais",
+    "url": "https://www.fazenda.mg.gov.br/empresas/certidao_debitos/",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Nova versão da CDT lançada em jan/2026. Serviço também em https://www.mg.gov.br/servico/emitir-certidao-de-debitos-tributarios-cdt",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://www.fazenda.mg.gov.br/empresas/certidao_debitos/"
+   }
+  ],
+  "PA": [
+   {
+    "id": "pa_sefa",
+    "nome": "Certidão Negativa — SEFA/PA",
+    "tipo": "estadual",
+    "orgao": "Secretaria de Estado da Fazenda do Pará",
+    "url": "https://app.sefa.pa.gov.br/emissao-certidao/template.action",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Portal do contribuinte da PGE/PA: https://www.pge.pa.gov.br/servicos/contribuinte (confirmar se exige certidão separada).",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://app.sefa.pa.gov.br/emissao-certidao/template.action"
+   }
+  ],
+  "PB": [
+   {
+    "id": "pb_sefaz",
+    "nome": "Certidão Negativa de Débitos — SEFAZ/PB",
+    "tipo": "estadual",
+    "orgao": "Secretaria de Estado da Fazenda da Paraíba",
+    "url": "https://cartaservico.sefaz.pb.gov.br/saibamais.php?id=91",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Carta de serviços da SEFAZ/PB, que remete ao sistema de emissão.",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://cartaservico.sefaz.pb.gov.br/saibamais.php?id=91"
+   }
+  ],
+  "PE": [
+   {
+    "id": "pe_sefaz",
+    "nome": "Certidão de Regularidade Fiscal — SEFAZ/PE",
+    "tipo": "estadual",
+    "orgao": "Secretaria da Fazenda de Pernambuco",
+    "url": "https://www.sefaz.pe.gov.br/Servicos/Paginas/portal_atendimento.aspx",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Portal de atendimento da SEFAZ/PE (e-Fisco).",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://www.sefaz.pe.gov.br/Servicos/Paginas/portal_atendimento.aspx"
+   },
+   {
+    "id": "pe_pge",
+    "nome": "Certidão de dívida ativa — PGE/PE",
+    "tipo": "estadual",
+    "orgao": "Procuradoria-Geral do Estado de Pernambuco",
+    "url": "http://www.pge.pe.gov.br/fazendacertidoes.aspx",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "http://www.pge.pe.gov.br/fazendacertidoes.aspx"
+   }
+  ],
+  "PI": [
+   {
+    "id": "pi_sefaz",
+    "nome": "Certidão de Situação Fiscal e Tributária — SEFAZ/PI",
+    "tipo": "estadual",
+    "orgao": "Secretaria da Fazenda do Piauí",
+    "url": "https://webas.sefaz.pi.gov.br/certidaoSituacao/",
+    "url_verificacao": "https://webas.sefaz.pi.gov.br/certidaoSituacao/jsp/validarCertidao.jsp",
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://webas.sefaz.pi.gov.br/certidaoSituacao/"
+   },
+   {
+    "id": "pi_divida_ativa",
+    "nome": "Certidão Negativa de Dívida Ativa — PI",
+    "tipo": "estadual",
+    "orgao": "Procuradoria-Geral do Estado do Piauí",
+    "url": "https://pidigital.pi.gov.br/app/catalog/financas-e-pagamentos/emitir-certidao-negativa-divida-ativa",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://pidigital.pi.gov.br/app/catalog/financas-e-pagamentos/emitir-certidao-negativa-divida-ativa"
+   }
+  ],
+  "PR": [
+   {
+    "id": "pr_receita",
+    "nome": "Certidão Negativa — Receita Estadual do Paraná",
+    "tipo": "estadual",
+    "orgao": "Secretaria da Fazenda do Paraná",
+    "url": "https://www.fazenda.pr.gov.br/servicos/Mais-buscados/Certidoes/Emitir-Certidao-Negativa-Receita-Estadual-kZrX5gol",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://www.fazenda.pr.gov.br/servicos/Mais-buscados/Certidoes/Emitir-Certidao-Negativa-Receita-Estadual-kZrX5gol"
+   }
+  ],
+  "RJ": [
+   {
+    "id": "rj_sefaz",
+    "nome": "Certidão de Regularidade Fiscal — SEFAZ/RJ (emissão e autenticidade)",
+    "tipo": "estadual",
+    "orgao": "Secretaria de Estado de Fazenda do Rio de Janeiro",
+    "url": "https://portal.fazenda.rj.gov.br/certidoes-de-regularidade-fiscal/emissao-e-autenticidade/",
+    "url_verificacao": "https://portal.fazenda.rj.gov.br/certidoes-de-regularidade-fiscal/emissao-e-autenticidade/",
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://portal.fazenda.rj.gov.br/certidoes-de-regularidade-fiscal/emissao-e-autenticidade/"
+   },
+   {
+    "id": "rj_pge",
+    "nome": "Certidão de Regularidade Fiscal — Dívida Ativa PGE/RJ",
+    "tipo": "estadual",
+    "orgao": "Procuradoria-Geral do Estado do Rio de Janeiro",
+    "url": "https://pge.rj.gov.br/divida-ativa-certidao-de-regularidade-fiscal",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://pge.rj.gov.br/divida-ativa-certidao-de-regularidade-fiscal"
+   }
+  ],
+  "RN": [
+   {
+    "id": "rn_set",
+    "nome": "Certidão Negativa de Débitos Estaduais — SET/RN",
+    "tipo": "estadual",
+    "orgao": "Secretaria de Estado da Tributação do Rio Grande do Norte",
+    "url": "https://www.set.rn.gov.br/",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Página inicial da SET/RN (acessar o serviço de certidão negativa). Orientação: http://www.set.rn.gov.br/content/aplicacao/set_v2/noticias/enviados/detalhe.asp?nCodigoNoticia=4805",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://www.set.rn.gov.br/"
+   }
+  ],
+  "RS": [
+   {
+    "id": "rs_receita",
+    "nome": "Certidão de Situação Fiscal — Receita Estadual/RS",
+    "tipo": "estadual",
+    "orgao": "Secretaria da Fazenda do Rio Grande do Sul",
+    "url": "https://www.sefaz.rs.gov.br/sat/CertidaoSitFiscalSolic.aspx",
+    "url_verificacao": "https://www.rs.gov.br/carta-de-servicos/servicos?servico=1697",
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://www.rs.gov.br/carta-de-servicos/servicos?servico=390"
+   }
+  ],
+  "RO": [
+   {
+    "id": "ro_sefin",
+    "nome": "Certidão Negativa de Tributos Estaduais — SEFIN/RO",
+    "tipo": "estadual",
+    "orgao": "Secretaria de Estado de Finanças de Rondônia",
+    "url": "https://portalcontribuinte.sefin.ro.gov.br/Publico/certidaoNegativa.jsp",
+    "url_verificacao": "https://portalcontribuinte.sefin.ro.gov.br/Publico/certidaoNegativaAutentica.jsp",
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://portalcontribuinte.sefin.ro.gov.br/Publico/certidaoNegativa.jsp"
+   }
+  ],
+  "RR": [
+   {
+    "id": "rr_sefaz",
+    "nome": "Certidão Negativa de Débitos Estaduais — SEFAZ/RR",
+    "tipo": "estadual",
+    "orgao": "Secretaria de Estado da Fazenda de Roraima",
+    "url": "https://portalweb.sefaz.rr.gov.br/cnd/servlet/wp_siate_emitircndcentralservicopublica",
+    "url_verificacao": "https://portalweb.sefaz.rr.gov.br/cnd/servlet/wp_siate_acessocentralservicovalidacndpublica",
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://portalweb.sefaz.rr.gov.br/cnd/servlet/wp_siate_emitircndcentralservicopublica"
+   }
+  ],
+  "SC": [
+   {
+    "id": "sc_sef",
+    "nome": "Certidão Negativa de Débitos Fiscais (CND) — SEF/SC",
+    "tipo": "estadual",
+    "orgao": "Secretaria de Estado da Fazenda de Santa Catarina",
+    "url": "https://www.sef.sc.gov.br/servicos/emitir-certidao-negativa-de-debitos-fiscais-cnd",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://www.sef.sc.gov.br/servicos/emitir-certidao-negativa-de-debitos-fiscais-cnd"
+   }
+  ],
+  "SP": [
+   {
+    "id": "sp_pge_crda",
+    "nome": "Certidão de Débitos Tributários Inscritos na Dívida Ativa (e-CRDA) — PGE/SP",
+    "tipo": "estadual",
+    "orgao": "Procuradoria-Geral do Estado de São Paulo",
+    "url": "https://www.dividaativa.pge.sp.gov.br/sc/pages/crda/emitirCrda.jsf",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Débitos inscritos em dívida ativa. Manual: https://www.dividaativa.pge.sp.gov.br/sc/resources/pdf/duvidas/Manual_de_Certidao_de_Debitos.pdf",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://www.dividaativa.pge.sp.gov.br/sc/pages/crda/emitirCrda.jsf"
+   },
+   {
+    "id": "sp_sefaz_nao_inscritos",
+    "nome": "Certidão Negativa de Débitos Tributários Não Inscritos na Dívida Ativa — SEFAZ/SP",
+    "tipo": "estadual",
+    "orgao": "Secretaria da Fazenda e Planejamento de São Paulo",
+    "url": "https://portal.fazenda.sp.gov.br/servicos/certidoes/Paginas/Guia-N%C3%A3o-Inscritos.aspx",
+    "url_verificacao": "https://www10.fazenda.sp.gov.br/CertidaoNegativaDeb/Pages/ValidacaoCertidaoNegativa.aspx",
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Débitos não inscritos (ICMS, IPVA, ITCMD declarados e não pagos). Exige as duas certidões (PGE e SEFAZ) para regularidade estadual em SP.",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://portal.fazenda.sp.gov.br/servicos/certidoes/Paginas/Guia-N%C3%A3o-Inscritos.aspx"
+   }
+  ],
+  "SE": [
+   {
+    "id": "se_sefaz",
+    "nome": "Certidões — SEFAZ/SE",
+    "tipo": "estadual",
+    "orgao": "Secretaria de Estado da Fazenda de Sergipe",
+    "url": "https://www.sefaz.se.gov.br/SitePages/certidoes.aspx",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://www.sefaz.se.gov.br/SitePages/certidoes.aspx"
+   }
+  ],
+  "TO": [
+   {
+    "id": "to_sefaz",
+    "nome": "Certidão Negativa de Débitos (CND) — SEFAZ/TO",
+    "tipo": "estadual",
+    "orgao": "Secretaria da Fazenda do Tocantins",
+    "url": "https://www.to.gov.br/sefaz/cnd-certidao-negativa-de-debitos/jdl5z8dtl8o",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://www.to.gov.br/sefaz/cnd-certidao-negativa-de-debitos/jdl5z8dtl8o"
+   }
+  ]
+ },
+ "municipais": {
+  "AC/Rio Branco": [
+   {
+    "id": "rio_branco",
+    "nome": "Certidão de tributos municipais — Prefeitura de Rio Branco",
+    "tipo": "municipal",
+    "orgao": "Prefeitura de Rio Branco",
+    "url": null,
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Portal de emissão não localizado em página oficial nesta revisão. Confirmar link.",
+    "verificado_em": null,
+    "fonte": null
+   }
+  ],
+  "AL/Maceió": [
+   {
+    "id": "maceio",
+    "nome": "Certidão de tributos municipais — Prefeitura de Maceió",
+    "tipo": "municipal",
+    "orgao": "Prefeitura de Maceió",
+    "url": null,
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Portal de emissão não localizado em página oficial nesta revisão. Confirmar link.",
+    "verificado_em": null,
+    "fonte": null
+   }
+  ],
+  "AP/Macapá": [
+   {
+    "id": "macapa",
+    "nome": "Certidão de tributos municipais — Prefeitura de Macapá",
+    "tipo": "municipal",
+    "orgao": "Prefeitura de Macapá",
+    "url": null,
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Lista oficial de serviços: https://macapa.ap.gov.br/todos-os-servicos/ (localizar certidão). Confirmar link.",
+    "verificado_em": null,
+    "fonte": "https://macapa.ap.gov.br/todos-os-servicos/"
+   }
+  ],
+  "AM/Manaus": [
+   {
+    "id": "manaus",
+    "nome": "CND e outras certidões — SEMEF Manaus",
+    "tipo": "municipal",
+    "orgao": "Secretaria Municipal de Finanças de Manaus",
+    "url": "https://semefatende.manaus.am.gov.br/empresa/certidoes/",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://semefatende.manaus.am.gov.br/empresa/certidoes/"
+   }
+  ],
+  "BA/Salvador": [
+   {
+    "id": "salvador",
+    "nome": "Certidões — SEFAZ Salvador",
+    "tipo": "municipal",
+    "orgao": "Secretaria Municipal da Fazenda de Salvador",
+    "url": "https://www.sefaz.salvador.ba.gov.br/certidoes",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://www.sefaz.salvador.ba.gov.br/certidoes"
+   }
+  ],
+  "CE/Fortaleza": [
+   {
+    "id": "fortaleza",
+    "nome": "Certidão Negativa de Débitos Municipais — SEFIN Fortaleza (carta de serviços)",
+    "tipo": "municipal",
+    "orgao": "Secretaria Municipal das Finanças de Fortaleza",
+    "url": "https://cartadeservicos.sefin.fortaleza.ce.gov.br/",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Carta de serviços da SEFIN; localizar o serviço de certidão negativa.",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://cartadeservicos.sefin.fortaleza.ce.gov.br/"
+   }
+  ],
+  "DF/Brasília": [
+   {
+    "id": "brasilia",
+    "nome": "Certidão de Débitos do DF (abrange ISS)",
+    "tipo": "municipal",
+    "orgao": "Secretaria de Estado de Economia do Distrito Federal",
+    "url": "https://www.receita.fazenda.df.gov.br/aplicacoes/CartaServicos/servico.cfm?codServico=313&codTipoPessoa=6&codCategoriaServico=11&codSubCategoria=71",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "O DF não tem municípios; a certidão distrital substitui a municipal.",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://www.receita.fazenda.df.gov.br/aplicacoes/CartaServicos/servico.cfm?codServico=313&codTipoPessoa=6&codCategoriaServico=11&codSubCategoria=71"
+   }
+  ],
+  "ES/Vitória": [
+   {
+    "id": "vitoria",
+    "nome": "Certidão Negativa / Regularidade de Débitos de Tributos Municipais — Vitória",
+    "tipo": "municipal",
+    "orgao": "Prefeitura de Vitória",
+    "url": "https://tributario.vitoria.es.gov.br/servicos/CertidaoNegativa/CertidaoNegativa.aspx",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://cartadeservicos.vitoria.es.gov.br/areas/16-Fazenda/servicos/541-Certidao-Negativa-Regularidade-de-Debitos-de-Tributos-Municipais/"
+   }
+  ],
+  "GO/Goiânia": [
+   {
+    "id": "goiania",
+    "nome": "Certidão de tributos municipais — Prefeitura de Goiânia",
+    "tipo": "municipal",
+    "orgao": "Prefeitura de Goiânia",
+    "url": "https://www.goiania.go.gov.br/sing_servicos/certidao-negativa-de-debitos-iptu-itu-taxas/",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Página oficial localizada trata de IPTU/ITU/Taxas; confirmar a certidão de tributos mobiliários (ISS). Confirmar link.",
+    "verificado_em": null,
+    "fonte": "https://www.goiania.go.gov.br/sing_servicos/certidao-negativa-de-debitos-iptu-itu-taxas/"
+   }
+  ],
+  "MA/São Luís": [
+   {
+    "id": "sao_luis",
+    "nome": "Certidão de tributos municipais — Prefeitura de São Luís",
+    "tipo": "municipal",
+    "orgao": "Prefeitura de São Luís",
+    "url": null,
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Perguntas frequentes da SEMFAZ: https://www.saoluis.ma.gov.br/perguntas-frequentes---semfaz Confirmar link.",
+    "verificado_em": null,
+    "fonte": "https://www.saoluis.ma.gov.br/perguntas-frequentes---semfaz"
+   }
+  ],
+  "MT/Cuiabá": [
+   {
+    "id": "cuiaba",
+    "nome": "Certidões — Prefeitura de Cuiabá",
+    "tipo": "municipal",
+    "orgao": "Prefeitura de Cuiabá",
+    "url": "https://www.cuiaba.mt.gov.br/servicos/certidoes",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://www.cuiaba.mt.gov.br/servicos/certidoes"
+   }
+  ],
+  "MS/Campo Grande": [
+   {
+    "id": "campo_grande",
+    "nome": "Certidões e Fichas — SEFIN Campo Grande",
+    "tipo": "municipal",
+    "orgao": "Prefeitura de Campo Grande",
+    "url": "https://campogrande.ms.gov.br/sefin/certidoes",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://campogrande.ms.gov.br/sefin/certidoes"
+   }
+  ],
+  "MG/Belo Horizonte": [
+   {
+    "id": "belo_horizonte",
+    "nome": "Certidão Negativa de Débito — CND Online (SIATU/PBH)",
+    "tipo": "municipal",
+    "orgao": "Prefeitura de Belo Horizonte",
+    "url": "http://cndonline.siatu.pbh.gov.br/CNDOnline/",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "http://cndonline.siatu.pbh.gov.br/CNDOnline/"
+   }
+  ],
+  "PA/Belém": [
+   {
+    "id": "belem",
+    "nome": "Certidão Negativa de Débitos — SEFIN Belém",
+    "tipo": "municipal",
+    "orgao": "Secretaria Municipal de Finanças de Belém",
+    "url": "https://financas.belem.pa.gov.br/certidao-negativa-de-debitos/",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://financas.belem.pa.gov.br/certidao-negativa-de-debitos/"
+   }
+  ],
+  "PB/João Pessoa": [
+   {
+    "id": "joao_pessoa",
+    "nome": "Certidão Negativa — Prefeitura de João Pessoa",
+    "tipo": "municipal",
+    "orgao": "Prefeitura de João Pessoa",
+    "url": "https://www.joaopessoa.pb.gov.br/pc/certidaoNegativa.xhtml",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://www.joaopessoa.pb.gov.br/pc/certidaoNegativa.xhtml"
+   }
+  ],
+  "PR/Curitiba": [
+   {
+    "id": "curitiba",
+    "nome": "Certidão de Débitos Tributários e Dívida Ativa — Curitiba",
+    "tipo": "municipal",
+    "orgao": "Prefeitura de Curitiba",
+    "url": "https://www.curitiba.pr.gov.br/servicos/certidao-de-debitos-tributarios-e-divida-ativa/753",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://www.curitiba.pr.gov.br/servicos/certidao-de-debitos-tributarios-e-divida-ativa/753"
+   }
+  ],
+  "PE/Recife": [
+   {
+    "id": "recife",
+    "nome": "Certidão Negativa de Débitos — Recife em Dia",
+    "tipo": "municipal",
+    "orgao": "Prefeitura do Recife",
+    "url": "https://recifeemdia.recife.pe.gov.br/certidoesNegativasDebitos",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Serviço também no portal Conecta Recife: https://conecta.recife.pe.gov.br/servico/1066",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://recifeemdia.recife.pe.gov.br/certidoesNegativasDebitos"
+   }
+  ],
+  "PI/Teresina": [
+   {
+    "id": "teresina",
+    "nome": "Certidão de tributos municipais — Prefeitura de Teresina",
+    "tipo": "municipal",
+    "orgao": "Prefeitura de Teresina",
+    "url": null,
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Portal de emissão não localizado em página oficial nesta revisão. Confirmar link.",
+    "verificado_em": null,
+    "fonte": null
+   }
+  ],
+  "RJ/Rio de Janeiro": [
+   {
+    "id": "rio_de_janeiro",
+    "nome": "Serviços do ISS (certidões) — Prefeitura do Rio",
+    "tipo": "municipal",
+    "orgao": "Secretaria Municipal de Fazenda do Rio de Janeiro",
+    "url": "https://fazenda.prefeitura.rio/servicos-iss/",
+    "url_verificacao": "https://carioca.rio/servicos/iss-confirmacao-de-autenticidade-de-certidao/",
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Dívida ativa municipal: https://daminternet.rio.rj.gov.br/",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://fazenda.prefeitura.rio/servicos-iss/"
+   }
+  ],
+  "RN/Natal": [
+   {
+    "id": "natal",
+    "nome": "Certidão de tributos municipais — Prefeitura de Natal",
+    "tipo": "municipal",
+    "orgao": "Prefeitura de Natal",
+    "url": null,
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Portal de emissão não localizado em página oficial nesta revisão. Confirmar link.",
+    "verificado_em": null,
+    "fonte": null
+   }
+  ],
+  "RS/Porto Alegre": [
+   {
+    "id": "porto_alegre",
+    "nome": "Certidão de tributos municipais — Prefeitura de Porto Alegre",
+    "tipo": "municipal",
+    "orgao": "Prefeitura de Porto Alegre",
+    "url": null,
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Portal de emissão não localizado em página oficial nesta revisão. Confirmar link.",
+    "verificado_em": null,
+    "fonte": null
+   }
+  ],
+  "RO/Porto Velho": [
+   {
+    "id": "porto_velho",
+    "nome": "Certidão de tributos municipais — Prefeitura de Porto Velho",
+    "tipo": "municipal",
+    "orgao": "Prefeitura de Porto Velho",
+    "url": null,
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Notícia oficial informa emissão de certidões pelo portal/app PVH+: https://www.portovelho.ro.gov.br/noticias/57360 Confirmar link.",
+    "verificado_em": null,
+    "fonte": "https://www.portovelho.ro.gov.br/noticias/57360"
+   }
+  ],
+  "RR/Boa Vista": [
+   {
+    "id": "boa_vista",
+    "nome": "Certidão de tributos municipais — Prefeitura de Boa Vista",
+    "tipo": "municipal",
+    "orgao": "Prefeitura de Boa Vista",
+    "url": null,
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Portal de emissão não localizado em página oficial nesta revisão. Confirmar link.",
+    "verificado_em": null,
+    "fonte": null
+   }
+  ],
+  "SC/Florianópolis": [
+   {
+    "id": "florianopolis",
+    "nome": "Certidão negativa — pessoa jurídica (Florianópolis)",
+    "tipo": "municipal",
+    "orgao": "Prefeitura de Florianópolis",
+    "url": "https://www.pmf.sc.gov.br/entidades/serv_pagina_print.php?acao=open&id=3686",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Página de serviço da Secretaria Municipal da Fazenda (versão de impressão).",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://www.pmf.sc.gov.br/entidades/serv_pagina_print.php?acao=open&id=3686"
+   }
+  ],
+  "SE/Aracaju": [
+   {
+    "id": "aracaju",
+    "nome": "Certidão de tributos municipais — Prefeitura de Aracaju",
+    "tipo": "municipal",
+    "orgao": "Prefeitura de Aracaju",
+    "url": null,
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Notícia oficial informa emissão on-line: https://www.aracaju.se.gov.br/noticias/80457/fazenda_processo_para_emissao_de_certidoes_negativas_de_debitos_sera_todo_online.html Confirmar link.",
+    "verificado_em": null,
+    "fonte": "https://www.aracaju.se.gov.br/noticias/80457/fazenda_processo_para_emissao_de_certidoes_negativas_de_debitos_sera_todo_online.html"
+   }
+  ],
+  "SP/São Paulo": [
+   {
+    "id": "sao_paulo",
+    "nome": "Certidão Conjunta de Débitos de Tributos Mobiliários — São Paulo (emissão e autenticidade)",
+    "tipo": "municipal",
+    "orgao": "Secretaria Municipal da Fazenda de São Paulo",
+    "url": "https://prefeitura.sp.gov.br/web/fazenda/w/servicos/certidoes/2394",
+    "url_verificacao": "https://prefeitura.sp.gov.br/web/fazenda/w/servicos/certidoes/2394",
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://prefeitura.sp.gov.br/web/fazenda/w/servicos/certidoes/2394"
+   }
+  ],
+  "TO/Palmas": [
+   {
+    "id": "palmas",
+    "nome": "Certidão Negativa — Prefeitura de Palmas",
+    "tipo": "municipal",
+    "orgao": "Prefeitura de Palmas",
+    "url": "https://portalantigo.palmas.to.gov.br/portal/servicos/16",
+    "url_verificacao": null,
+    "captcha": null,
+    "validade_tipica_dias": null,
+    "observacao": "Página do portal antigo; o serviço pode ter migrado para o Resolve Palmas.",
+    "verificado_em": "2026-10-27",
+    "fonte": "https://portalantigo.palmas.to.gov.br/portal/servicos/16"
+   }
+  ]
+ }
+}
