@@ -46,7 +46,7 @@ python tests/gerar_amostras.py  # recria os PDFs de teste (fictícios)
    `MAX_MB_POR_ARQUIVO` e as variáveis abaixo.
 
 A interface web (`web/`) usa o CSS oficial do Padrão Digital de Governo
-(`@govbr-ds/core` 3.7.0, licença MIT) e a fonte Rawline, sem a marca gov.br.
+(`@govbr-ds/core` 3.7.0, licença MIT) com a fonte Raleway servida pelo próprio app (`web/static/fonts`, licença OFL; números alinhados ativados), sem a marca gov.br.
 
 ## Configuração opcional (variáveis de ambiente)
 | Variável | Para quê |

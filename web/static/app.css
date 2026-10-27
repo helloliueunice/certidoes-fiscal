@@ -1,4 +1,9 @@
 /* Ajustes locais sobre o Padrão Digital de Governo (gov.br DS 3.7). Usa os tokens do DS. */
+/* Tipografia: Raleway (OFL), servida pelo próprio app; Rawline como alternativa se instalada. */
+:root { --font-family-base: Raleway, Rawline, sans-serif; }
+body, button, input, select, textarea { font-family: var(--font-family-base);
+  font-variant-numeric: lining-nums; font-feature-settings: "lnum" 1; }
+table, .campos, .br-tag, input { font-variant-numeric: lining-nums tabular-nums; font-feature-settings: "lnum" 1, "tnum" 1; }
 body { background: var(--background, #fff); display: flex; flex-direction: column; min-height: 100vh; }
 main { flex: 1 0 auto; }
 
@@ -139,3 +144,5 @@ fieldset { border: 0; padding: 0; margin: 0; }
 /* texto só para leitores de tela */
 .sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+::placeholder { font-variant-numeric: lining-nums; font-feature-settings: "lnum" 1; }

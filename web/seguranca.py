@@ -10,8 +10,8 @@ from typing import Callable
 CSP = (
     "default-src 'self'; "
     "script-src 'self'; "
-    "style-src 'self' https://cdngovbr-ds.estaleiro.serpro.gov.br https://cdnjs.cloudflare.com; "
-    "font-src 'self' data: https://cdngovbr-ds.estaleiro.serpro.gov.br https://cdnjs.cloudflare.com; "
+    "style-src 'self' https://cdnjs.cloudflare.com; "
+    "font-src 'self' data: https://cdnjs.cloudflare.com; "
     "img-src 'self' data:; "
     "connect-src 'self'; "
     "form-action 'self' mailto:; "
