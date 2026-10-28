@@ -9,6 +9,7 @@ import unicodedata
 from datetime import date
 from typing import Optional
 
+from .extrator import abrange_raiz, e_estadual_unica
 from .models import (
     Certidao,
     Contrato,
@@ -42,6 +43,8 @@ ROTULO_SITUACAO = {
     Situacao.REGULAR: "Regular",
     Situacao.INDETERMINADA: "Não identificada",
 }
+
+MSG_UNICA = "Certidão única estadual (débitos inscritos e não inscritos em dívida ativa)"
 
 MSG_SP = (
     "Em SP são exigidas a certidão da PGE (dívida ativa) e a da SEFAZ "
@@ -175,6 +178,11 @@ def avaliar_certidao(
             notas.append(
                 f"Emitida para {formatar_cnpj(cert.cnpj)}; a certidão federal abrange matriz e filiais."
             )
+        elif e_estadual_unica(cert) and abrange_raiz(cert.texto):
+            notas.append(
+                f"Emitida para {formatar_cnpj(cert.cnpj)}; a certidão estadual única declara que "
+                "abrange matriz e filiais (raiz do CNPJ)."
+            )
         else:
             amarelos.append(
                 f"Emitida para outro estabelecimento da mesma empresa ({formatar_cnpj(cert.cnpj)}); "
@@ -273,14 +281,61 @@ ROTULO_SP = {
 }
 
 
+def _item_unica(
+    cert: Certidao, cands: list[Certidao], contrato: Contrato, hoje: date, dias_alerta: int
+) -> ItemChecklist:
+    sem, msg = _avaliar_no_grupo(cert, cands, contrato, hoje, dias_alerta)
+    return ItemChecklist(TipoCertidao.ESTADUAL, sem, f"{MSG_UNICA}: {msg}", cert)
+
+
 def _item_estadual_sp(
     cands: list[Certidao], contrato: Contrato, hoje: date, dias_alerta: int
 ) -> tuple[ItemChecklist, list[Certidao]]:
-    """SP: PGE (dívida ativa) + SEFAZ (não inscritos). Retorna item e certidões usadas."""
+    """SP: Certidão Única (Sefaz + PGE, SIDEB) ou, no modelo antigo, PGE (dívida ativa) + SEFAZ
+    (não inscritos). Retorna item e certidões usadas.
+
+    Com a única e o par antigo completo, prevalece o mais recente (data de emissão da única x a
+    mais antiga do par); sem datas comparáveis, o de melhor semáforo (empate: a única).
+    """
     locais = [c for c in cands if _local(c, contrato) >= 1]
+    unicas = [c for c in locais if e_estadual_unica(c)]
+    antigas = [c for c in locais if not e_estadual_unica(c)]
+    if unicas:
+        u = _melhor(unicas, contrato, hoje, dias_alerta)
+        item_u = _item_unica(u, locais, contrato, hoje, dias_alerta)
+        item_a, usadas_a = _item_estadual_sp_antigo(antigas, locais, contrato, hoje, dias_alerta)
+        if item_a is None or len(usadas_a) < 2:
+            return item_u, [u]
+        du = u.data_emissao
+        datas_a = [c.data_emissao for c in usadas_a]
+        da = min(datas_a) if all(datas_a) else None
+        if du and da and du != da:
+            usar_antigo = da > du
+        else:
+            usar_antigo = _ORDEM[item_a.semaforo] < _ORDEM[item_u.semaforo]
+        if usar_antigo:
+            return item_a, usadas_a
+        return item_u, [u]
+    item, usadas = _item_estadual_sp_antigo(antigas, locais, contrato, hoje, dias_alerta)
+    if item is None:
+        # nenhuma de SP: avalia a melhor de outra UF (gera amarelo de UF diferente)
+        outra = _melhor(cands, contrato, hoje, dias_alerta)
+        if e_estadual_unica(outra):
+            return _item_unica(outra, cands, contrato, hoje, dias_alerta), [outra]
+        sem, msg = _avaliar_no_grupo(outra, cands, contrato, hoje, dias_alerta)
+        return ItemChecklist(TipoCertidao.ESTADUAL, sem, msg, outra), [outra]
+    return item, usadas
+
+
+def _item_estadual_sp_antigo(
+    locais: list[Certidao], todas_locais: list[Certidao], contrato: Contrato, hoje: date,
+    dias_alerta: int,
+) -> tuple[Optional[ItemChecklist], list[Certidao]]:
+    """Modelo antigo de SP: PGE + SEFAZ. (None, []) se não houver nenhuma."""
     grupos: dict[Optional[str], list[Certidao]] = {"pge": [], "sefaz": [], None: []}
     for c in locais:
         grupos[_subtipo_sp(c)].append(c)
+    unicas = [c for c in todas_locais if c not in locais]  # entram só no teste de positiva recente
     pge = _melhor(grupos["pge"], contrato, hoje, dias_alerta)
     sefaz = _melhor(grupos["sefaz"], contrato, hoje, dias_alerta)
     resto = sorted(
@@ -294,10 +349,7 @@ def _item_estadual_sp(
 
     usadas = [c for c in (pge, sefaz) if c is not None]
     if not usadas:
-        # nenhuma de SP: avalia a melhor de outra UF (gera amarelo de UF diferente)
-        outra = _melhor(cands, contrato, hoje, dias_alerta)
-        sem, msg = _avaliar_no_grupo(outra, cands, contrato, hoje, dias_alerta)
-        return ItemChecklist(TipoCertidao.ESTADUAL, sem, msg, outra), [outra]
+        return None, []
 
     sem = Semaforo.VERDE
     msgs = []
@@ -305,7 +357,7 @@ def _item_estadual_sp(
     pior_sem = Semaforo.VERDE
     for c in usadas:
         sub = _subtipo_sp(c)
-        grupo = grupos[sub]
+        grupo = grupos[sub] + unicas
         s, m = _avaliar_no_grupo(c, grupo, contrato, hoje, dias_alerta)
         if sub is None:
             s = _pior(s, Semaforo.AMARELO)
@@ -333,7 +385,8 @@ COBERTOS_SICAF = (
     TipoCertidao.FEDERAL, TipoCertidao.FGTS, TipoCertidao.TRABALHISTA,
     TipoCertidao.ESTADUAL, TipoCertidao.MUNICIPAL,
 )
-MSG_SICAF_SP = "SICAF traz uma única certidão estadual; em SP confira PGE e SEFAZ."
+MSG_SICAF_SP = ("SICAF traz uma única certidão estadual; em SP confira PGE e SEFAZ "
+                "(ou a Certidão Única Sefaz + PGE do SIDEB).")
 MSG_SICAF_MANUAL = (
     "Certidão inserida manualmente pelo fornecedor no SICAF: conferir a certidão no site do emissor."
 )
@@ -567,8 +620,12 @@ def validar(
                 proprio, usadas = _item_estadual_sp(cands, contrato, hoje, dias_alerta)
             else:
                 melhor = _melhor(cands, contrato, hoje, dias_alerta)
-                sem, msg = _avaliar_no_grupo(melhor, cands, contrato, hoje, dias_alerta)
-                proprio, usadas = ItemChecklist(tipo, sem, msg, melhor), [melhor]
+                if e_estadual_unica(melhor):
+                    proprio = _item_unica(melhor, cands, contrato, hoje, dias_alerta)
+                else:
+                    sem, msg = _avaliar_no_grupo(melhor, cands, contrato, hoje, dias_alerta)
+                    proprio = ItemChecklist(tipo, sem, msg, melhor)
+                usadas = [melhor]
         if contrato.aceitar_sicaf and tipo in COBERTOS_SICAF:
             item, sic = _combinar_sicaf(tipo, cands, proprio, compat, incompat, contrato, hoje, dias_alerta)
             if sic is not None:
@@ -594,9 +651,11 @@ def _complementa_sp(cert: Certidao, resultado: ResultadoValidacao) -> bool:
         and contrato.uf_sede.strip().upper() == "SP"
         and TipoCertidao.ESTADUAL in contrato.exigidas
         and _local(cert, contrato) >= 1
+        and not e_estadual_unica(cert)
         and _subtipo_sp(cert) is not None
         and any(i.tipo == TipoCertidao.ESTADUAL and i.certidao is not None
                 and i.certidao.tipo == TipoCertidao.ESTADUAL
+                and not e_estadual_unica(i.certidao)
                 and i.certidao is not cert and _subtipo_sp(i.certidao) != _subtipo_sp(cert)
                 for i in resultado.itens)
     )
@@ -653,6 +712,11 @@ def _nota_extra_base(cert: Certidao, resultado: ResultadoValidacao) -> str:
             "avaliada no item."
         )
     if cert.tipo in exigidas:
+        if (cert.tipo == TipoCertidao.ESTADUAL and not e_estadual_unica(cert)
+                and any(i.tipo == TipoCertidao.ESTADUAL and i.certidao is not None
+                        and e_estadual_unica(i.certidao) for i in resultado.itens)):
+            return ("Certidão estadual do modelo anterior (PGE/SEFAZ) não utilizada: a certidão única "
+                    "estadual (Sefaz + PGE) já comprova o item.")
         if any(i.tipo == cert.tipo and i.certidao is not None
                and i.certidao.tipo == TipoCertidao.SICAF for i in resultado.itens):
             return ("Certidão própria não utilizada: o item foi comprovado pela declaração do SICAF "

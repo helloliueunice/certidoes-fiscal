@@ -525,3 +525,94 @@ def test_sicaf_sem_itens_so_situacao_ainda_chama_regra_de_ia(monkeypatch):
     c = ler_texto(t)
     assert _tipos(c) == set()
     assert extrator._precisa_ia(c) is True
+
+
+# ---------------------------------------------------------------- estadual única (Sefaz + PGE)
+
+def test_sp_unica_amostra(amostras):
+    pasta, _ = amostras
+    c = ler_pdf(pasta / "estadual_sp_unica.pdf")
+    assert c.tipo == TipoCertidao.ESTADUAL
+    assert c.orgao_emissor == "SEFAZ+PGE-SP"
+    assert extrator.e_estadual_unica(c)
+    assert extrator.abrange_raiz(c.texto)
+    assert c.validade == c.data_emissao + timedelta(days=90)
+    assert c.url_verificacao.startswith("https://www4.fazenda.sp.gov.br/SIDEB")
+    assert not c.avisos
+
+
+def test_sp_antigas_continuam_pge_e_sefaz(amostras):
+    pasta, _ = amostras
+    pge = ler_pdf(pasta / "estadual_sp_pge.pdf")
+    sefaz = ler_pdf(pasta / "estadual_sp_sefaz.pdf")  # cita "Resolução Conjunta SF/PGE"
+    assert pge.orgao_emissor == "PGE-SP" and not extrator.e_estadual_unica(pge)
+    assert sefaz.orgao_emissor == "SEFAZ-SP" and not extrator.e_estadual_unica(sefaz)
+    assert not extrator.abrange_raiz(pge.texto)
+
+
+def test_unica_generica_outra_uf_inscritos_e_nao_inscritos():
+    t = ("GOVERNO DO ESTADO DE MINAS GERAIS\nCertidão de Débitos Tributários\n"
+         f"CNPJ: {gerar_amostras.fmt_cnpj(CNPJ)}\n"
+         "Certifica-se que não constam débitos tributários, inscritos e não inscritos em dívida "
+         "ativa, em nome do contribuinte.\nData de emissão: 01/10/2026\nVálida até 30/12/2026")
+    c = ler_texto(t, "mg.pdf")
+    assert c.tipo == TipoCertidao.ESTADUAL
+    assert c.uf == "MG"
+    assert c.orgao_emissor == "SEFAZ+PGE-MG"
+    assert c.situacao == Situacao.NEGATIVA
+
+
+@pytest.mark.parametrize("trecho", [
+    "Certidão Única de Débitos Tributários Estaduais.",
+    "Certidão conjunta da Secretaria de Estado de Fazenda e da Procuradoria-Geral do Estado.",
+    "Abrange débitos inscritos ou não inscritos na dívida ativa.",
+])
+def test_unica_rj_e_variantes(trecho):
+    t = ("ESTADO DO RIO DE JANEIRO\nCERTIDÃO NEGATIVA DE DÉBITOS\n"
+         f"CNPJ: {gerar_amostras.fmt_cnpj(CNPJ)}\n{trecho}\nNão constam débitos.\n"
+         "Data de emissão: 01/11/2026\nVálida até 29/01/2027")
+    c = ler_texto(t)
+    assert c.orgao_emissor == "SEFAZ+PGE-RJ"
+    assert extrator.e_estadual_unica(c)
+
+
+def test_resolucao_conjunta_nao_e_unica():
+    t = ("GOVERNO DO ESTADO DE SÃO PAULO\nSecretaria da Fazenda\n"
+         "Certidão de Débitos Tributários Não Inscritos na Dívida Ativa do Estado de São Paulo\n"
+         f"CNPJ: {CNPJ}\nNão constam débitos.\nResolução Conjunta SF/PGE nº 1.\nVálida até 01/12/2026")
+    assert ler_texto(t).orgao_emissor == "SEFAZ-SP"
+
+
+def test_sideb_sem_uf_no_texto_e_sp():
+    t = (f"SIDEB\nCERTIDÃO NEGATIVA DE DÉBITOS TRIBUTÁRIOS\nCNPJ: {CNPJ}\n"
+         "Não constam débitos inscritos e não inscritos em dívida ativa.\n"
+         "Data de emissão: 01/11/2026\nVálida por 180 dias.")
+    c = ler_texto(t)
+    assert c.tipo == TipoCertidao.ESTADUAL
+    assert c.uf == "SP" and c.orgao_emissor == "SEFAZ+PGE-SP"
+    assert c.validade == date(2026, 11, 1) + timedelta(days=180)
+    assert c.url_verificacao == extrator.URL_SIDEB
+
+
+@pytest.mark.parametrize("frase,dias", [
+    ("Válida por 90 (noventa) dias a partir da data de emissão.", 90),
+    ("Validade de noventa dias, contados da emissão.", 90),
+    ("Válida por cento e oitenta dias.", 180),
+    ("Prazo de validade: 180 dias.", 180),
+])
+def test_validade_90_e_180_dias(frase, dias):
+    t = (f"GOVERNO DO ESTADO DE SÃO PAULO\nCertidão Única\nCNPJ: {CNPJ}\nNão constam débitos.\n"
+         f"Data de emissão: 01/11/2026\n{frase}")
+    assert ler_texto(t).validade == date(2026, 11, 1) + timedelta(days=dias)
+
+
+@pytest.mark.parametrize("frase,esperado", [
+    ("A certidão abrange todos os estabelecimentos da empresa.", True),
+    ("Válida para a matriz e filiais.", True),
+    ("Emitida pelo CNPJ base 12.345.678.", True),
+    ("Abrangência: raiz do CNPJ.", True),
+    ("Não abrange os demais estabelecimentos.", False),
+    ("Certidão do estabelecimento.", False),
+])
+def test_abrange_raiz(frase, esperado):
+    assert extrator.abrange_raiz(frase) is esperado

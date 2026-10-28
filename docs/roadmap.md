@@ -26,15 +26,17 @@ Linha de base a medir na Fase 0. A hipótese inicial é de 20 a 40 minutos por c
 **Indicadores:** % de NFs recebidas com o conjunto completo de certidões; redução do tempo por contrato (meta indicativa: -40%).
 
 ## Fase 1-A — Redução de captchas (em paralelo à Fase 1, de 1 a 3 meses)
-Guia do fiscal: `docs/estrategia_captcha.md`. **Nenhuma medida contorna captcha.**
+Plano: `docs/plano_minimizacao_captcha.md`. Guia do fiscal: `docs/estrategia_captcha.md`. **Nenhuma medida contorna captcha.**
 
-**Entregáveis**
-- SICAF como primeira consulta, aceitando os itens "Automática" para federal, FGTS e CNDT (cláusula `docs/clausula_contratual.md`, itens [__].3.1 e [__].3.2).
-- Rotina de conferência só do que é novo ou vence: validar a autenticidade uma vez por documento e, nos meses seguintes, conferir apenas a data de validade.
-- Ofício às contratadas (`docs/oficio_contratadas.md`) para o envio das certidões que vencem antes do próximo pagamento.
-- Ofícios aos emissores (`docs/oficio_orgaos_emissores.md`): Caixa, TST/CSJT, SEFAZ das UFs de sede e Secretarias de Fazenda dos municípios que concentram mais contratadas. Registrar as respostas.
-- Adesão ao Conecta gov.br (antecipa parte da Fase 3).
-- Mutirão mensal em data fixa, com os portais agrupados.
+**Entregáveis por camada** (a conta é conservadora e cumulativa, em captchas por contratada/mês)
+| Camada | Entregáveis | Responsável | Efeito |
+|---|---|---|---|
+| **C0 — não emitir** | Cláusula (`docs/clausula_contratual.md`, itens [__].2, [__].3.2 e [__].5) e ofício às contratadas (`docs/oficio_contratadas.md`); aceitar a certidão válida na data do pagamento; validar a autenticidade uma vez por documento novo | Unidade de contratos; assessoria jurídica; fiscal | 5 → 3,3 |
+| **C1 — rotas sem captcha** | SICAF consultado pelo fiscal (itens "Automática"); login gov.br do servidor onde o portal oferecer; uma certidão federal para matriz e filiais (raiz do CNPJ) | Fiscal; chefia | 3,3 → 2,0 (no SICAF) |
+| **C2 — integração institucional** | Adesão ao Conecta gov.br (antecipa parte da Fase 3); ofícios de consulta (`docs/oficio_orgaos_emissores.md`) e requerimento formal (`docs/requerimento_canal_sem_captcha.md`) às SEFAZ, prefeituras, Caixa, TST e SGD/Conecta; registro das respostas | Alta administração; TI; unidade de contratos | 0 a −2, conforme as respostas |
+| **C3 — organização** | Mutirão mensal em data fixa; uma pessoa centraliza a validação; calendário de vencimentos | Chefia; fiscal | só tempo |
+| **C4 — segurança** | Orientação de que a conta gov.br é pessoal e intransferível; política de certificado digital; revisão LGPD; código de controle e data de verificação no processo | Chefia; TI; encarregado de dados | condição para C0 a C2 |
+| — | Memorando do fiscal à chefia propondo C0 a C4 (`docs/requerimento_canal_sem_captcha.md`, Parte B) | Fiscal | — |
 
 **Indicadores**
 | Indicador | Antes (linha de base) | Depois (meta indicativa) |
@@ -44,7 +46,7 @@ Guia do fiscal: `docs/estrategia_captcha.md`. **Nenhuma medida contorna captcha.
 | % de certidões que vencem antes do pagamento e chegam com a NF | [__]% | ≥ 90% |
 | Ofícios aos emissores respondidos / com canal oficial disponível | — | [__] / [__] |
 
-*Como medir:* na Fase 0 e em cada ciclo mensal, o fiscal anota o número de captchas resolvidos por contratada. A estimativa e as premissas estão em `docs/estrategia_captcha.md`, seção 3.
+*Como medir:* na Fase 0 e em cada ciclo mensal, o fiscal anota o número de captchas resolvidos por contratada. A estimativa e as premissas estão em `docs/estrategia_captcha.md`, seção 3. A conta por camada está em `docs/plano_minimizacao_captcha.md`, seções 2 a 4.
 
 ## Fase 2 — MVP do validador (1 a 2 meses)
 **Entregáveis**

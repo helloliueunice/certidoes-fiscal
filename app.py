@@ -152,6 +152,12 @@ with st.sidebar:
     else:
         st.caption("IA desligada — leitura apenas por regras.")
 
+def selo_acesso(p: dict) -> str:
+    """Selo de acesso em texto (equivalente às br-tag do gov.br DS)."""
+    acesso = planejamento.acesso_do_portal(p)
+    return f"{planejamento.EMOJI_ACESSO[acesso]} {planejamento.rotulo_acesso(p)}"
+
+
 contrato_ok = bool(numero and cnpj_valido(cnpj) and razao and municipio)
 
 
@@ -173,6 +179,7 @@ aba1, aba2, aba4, aba3 = st.tabs(["1. Buscar certidões", "2. Conferir", "3. Pla
 # ------------------------------------------------------------------ aba 1
 with aba1:
     st.info("Portais com captcha são acessados por você; o sistema não contorna captcha.")
+    st.success(planejamento.AVISO_ROTAS, icon=":material/lock_open:")
     if cnpj_valido(cnpj):
         st.write("CNPJ para copiar e colar nos portais:")
         c1, c2 = st.columns(2)
@@ -194,7 +201,9 @@ with aba1:
             lista = []
             st.error(f"Não foi possível carregar o catálogo de portais: {e}")
         tipos_ok = {t.value for t in exigidas}
-        for p in lista:
+        # em cada tipo, as rotas sem captcha primeiro (itens antigos: deduz do campo "captcha")
+        lista = planejamento.ordenar_por_rota(list(lista))
+        for k, p in enumerate(lista):
             tipo = p.get("tipo", "")
             if tipos_ok and tipo not in tipos_ok and tipo not in ("outra",):
                 continue
@@ -203,12 +212,13 @@ with aba1:
             except ValueError:
                 rot = tipo
             col_a, col_b = st.columns([4, 1])
-            icone = "🔒 com captcha" if p.get("captcha") else "sem captcha"
-            col_a.markdown(f"**{p.get('nome', '')}** — {rot} · {icone}")
+            col_a.markdown(f"**{p.get('nome', '')}** — {rot} · {selo_acesso(p)}")
+            if isinstance(p.get("validade_tipica_dias"), int) and p["validade_tipica_dias"] > 0:
+                col_a.caption(f"Nova certidão costuma valer {p['validade_tipica_dias']} dias.")
             if p.get("observacao"):
                 col_a.caption(p["observacao"])
             if p.get("url"):
-                col_b.link_button("Abrir portal", p["url"], width="stretch")
+                col_b.link_button("Abrir portal", p["url"], width="stretch", key=f"busca_{k}")
         if not lista:
             st.write("Nenhum portal cadastrado para esta UF/município.")
 
@@ -345,6 +355,18 @@ with aba2:
                            file_name=base + ".csv", mime="text/csv", width="stretch")
         st.caption("O PDF é uma minuta: revise, confira a autenticidade e assine.")
 
+        rotas = planejamento.sugestoes_de_rota(resultado)
+        if rotas:
+            st.subheader("Onde emitir o que falta")
+            st.caption(planejamento.AVISO_ROTAS + " Nos portais com captcha, é você quem resolve.")
+            for n, x in enumerate(rotas):
+                ca, cb = st.columns([4, 1])
+                selo = selo_acesso(x["portal"]) if x["portal"] else planejamento.EMOJI_ACESSO["desconhecido"] + " acesso a confirmar"
+                ca.markdown(f"**{x['rotulo']}** · {selo}  \n{x['texto']}"
+                            + (f" · {x['nota_validade']}" if x["nota_validade"] else ""))
+                if x["url"]:
+                    cb.link_button("Abrir portal", x["url"], width="stretch", key=f"rota_{n}_{x['tipo']}")
+
         grupo = planejamento.grupo_de_resultado(resultado)
         if grupo["a_emitir"]:
             st.subheader("Pedir as certidões à contratada")
@@ -387,12 +409,19 @@ with aba4:
             grupos = planejamento.planejar(linhas, ate=ate, hoje=date.today(), aceitar_sicaf=sicaf_todos)
             t = planejamento.totalizar(grupos)
             st.subheader(f"Plano até {formatar_data(ate)}")
-            c = st.columns(6)
+            c = st.columns(4)
             c[0].metric("Contratadas", t["contratadas"]); c[1].metric("🟢 Ainda válidas", t["ok"])
             c[2].metric("🔴 A emitir", t["a_emitir"]); c[3].metric("🟡 A reconferir", t["a_reconferir"])
-            c[4].metric("Via SICAF", t["via_sicaf"]); c[5].metric("Captchas evitados", t["captchas_evitados"])
-            st.caption("Captchas evitados = certidões ainda válidas + itens comprovados pelo SICAF. "
-                       f"Estimativa de captchas a resolver hoje: **{t['captchas_a_resolver']}**.")
+            c = st.columns(4)
+            c[0].metric("Via SICAF", t["via_sicaf"]); c[1].metric("Captchas evitados", t["captchas_evitados"])
+            c[2].metric("🟢 Sem captcha (gov.br)", t["sem_captcha_govbr"]); c[3].metric("🔒 Captchas a resolver", t["captchas_a_resolver"])
+            a_conf = t["acesso_a_confirmar"]
+            st.caption("Captchas evitados = certidões ainda válidas + itens comprovados pelo SICAF + itens com rota sem "
+                       "captcha (login gov.br do próprio servidor, certificado digital ou portal aberto). "
+                       f"Estimativa de captchas a resolver hoje: **{t['captchas_a_resolver']}**"
+                       + (f"; mais **{a_conf}** {'item' if a_conf == 1 else 'itens'} com acesso a confirmar (pode haver captcha)"
+                          if a_conf else "") + ".")
+            st.info(planejamento.AVISO_ROTAS, icon=":material/lock_open:")
             st.download_button("Baixar lista do mutirão (CSV)", planejamento.csv_plano(grupos).encode("utf-8-sig"),
                                file_name=f"mutirao_{ate:%Y-%m-%d}.csv", mime="text/csv", icon=":material/download:")
             feitos, total = 0, 0
@@ -413,13 +442,16 @@ with aba4:
                                            + (" · consultar SICAF" if i["acao"] == "consultar SICAF" else ""),
                                            key=f"feito_{g['cnpj']}_{g['contrato']}_{i['tipo']}_{ate:%Y%m%d}")
                         feitos += int(feito)
-                        a.caption(f"Validade registrada: {i['validade_txt'] or '—'} · {i['motivo']}")
-                        for j, pt in enumerate(i["portais"]):
+                        a.caption(f"Validade registrada: {i['validade_txt'] or '—'} · {i['motivo']}"
+                                  + (f" · {i['nota_validade']}" if i.get("nota_validade") else ""))
+                        if i["acao"] == "emitir" and i.get("rota_sem_captcha"):
+                            a.caption("🟢 " + i["melhor_rota_txt"])
+                        for j, pt in enumerate(planejamento.ordenar_portais(i["portais"])):
                             if pt.get("url"):
                                 rot_b = ("Abrir SICAF" if i["acao"] == "consultar SICAF" else "Abrir portal") + \
-                                        (f" {j + 1}" if len(i["portais"]) > 1 else "") + \
-                                        (" · com captcha" if pt.get("captcha") is True else "")
-                                b.link_button(rot_b, pt["url"], help=pt.get("nome"), icon=":material/open_in_new:")
+                                        (f" {j + 1}" if len(i["portais"]) > 1 else "") + " · " + selo_acesso(pt)
+                                b.link_button(rot_b, pt["url"], help=pt.get("nome"), icon=":material/open_in_new:",
+                                              key=f"portal_{n}_{g['cnpj']}_{i['tipo']}_{j}")
                         if not i["portais"]:
                             b.caption("Portal não catalogado: use o site do emissor.")
                     if g["ok"]:

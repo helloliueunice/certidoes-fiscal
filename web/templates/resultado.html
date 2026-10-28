@@ -72,6 +72,26 @@
   </table>
 </div>
 
+{% if rotas %}
+<section class="mt-4" aria-labelledby="t-rotas">
+  <h2 class="h4" id="t-rotas">Onde emitir o que falta</h2>
+  <p class="text-down-01 mb-2">{{ AVISO_ROTAS }} Nos portais com captcha, é você quem resolve.</p>
+  <div class="br-list lista-rotas" role="list">
+  {% for x in rotas %}
+    <div class="br-item" role="listitem">
+      <div class="portal-info">
+        <div class="portal-nome">{{ x.rotulo }}</div>
+        <div class="mt-half"><span class="br-tag small {{ x.classe_acesso }} selo-acesso"><i class="fas {{ ICONE_ACESSO[x.acesso] }}" aria-hidden="true"></i> {{ x.rotulo_acesso }}</span></div>
+        <div class="text-down-01 mt-half">{{ x.texto }}{% if x.nota_validade %} · {{ x.nota_validade }}{% endif %}</div>
+      </div>
+      {% if x.url %}<a class="br-button secondary small" href="{{ x.url }}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt" aria-hidden="true"></i>Abrir portal<span class="sr-only"> — {{ x.portal.nome }} (abre em nova aba)</span></a>{% endif %}
+    </div>
+    <span class="br-divider"></span>
+  {% endfor %}
+  </div>
+</section>
+{% endif %}
+
 {% if solicitacao %}
 <details class="detalhe solicitacao mt-4" id="solicitacao">
   <summary><span class="title"><i class="fas fa-envelope mr-1" aria-hidden="true"></i>Texto de solicitação à contratada (itens PENDENTE e ATENÇÃO)</span></summary>

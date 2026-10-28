@@ -3,6 +3,11 @@
 > **MINUTA de guia prático para o fiscal.** Não substitui norma interna nem parecer jurídico.
 > A decisão sobre o atesto é sempre do fiscal e do gestor do contrato.
 > Pesquisa feita em 27/10/2026. As fontes estão em `docs/fontes.md`.
+>
+> **Plano institucional completo:** `docs/plano_minimizacao_captcha.md`. Ele organiza estas medidas
+> nas camadas C0 a C4, com o responsável e a conta de captchas por camada, e traz a base legal de
+> desburocratização. O requerimento aos emissores e o memorando à chefia estão em
+> `docs/requerimento_canal_sem_captcha.md`. Este guia continua sendo o resumo prático para o fiscal.
 
 ## 1. Por que não contornar o captcha
 
@@ -20,7 +25,7 @@
 | 1 | **Consultar o SICAF primeiro** | Federal, FGTS e CNDT marcadas como **"Automática"** foram obtidas pelo SICAF por integração direta com o emissor. Isso elimina 3 captchas por contratada cadastrada. A consulta a cada pagamento já é exigida dos órgãos do SISG (IN SEGES/MP nº 3/2018, art. 31). |
 | 2 | **Conferir só o que é novo ou vence** | Certidão já conferida e ainda válida na data do pagamento não precisa ser emitida nem validada de novo. Basta ler a data de validade, que não tem captcha (ver a seção 4). |
 | 3 | **A contratada envia as certidões com a NF** | A emissão passa para a contratada (`docs/oficio_contratadas.md` e `docs/clausula_contratual.md`). O fiscal só valida o código de controle, uma vez por documento novo. |
-| 4 | **Ofícios aos emissores estaduais e municipais** | Potencial alto, porque estadual e municipal são o que sobra depois do SICAF, mas o resultado é incerto. Não localizei serviço oficial (`docs/oficio_orgaos_emissores.md`). |
+| 4 | **Ofícios aos emissores estaduais e municipais** | Potencial alto, porque estadual e municipal são o que sobra depois do SICAF, mas o resultado é incerto. Não localizei serviço oficial (`docs/oficio_orgaos_emissores.md`). Para o pedido formal, use `docs/requerimento_canal_sem_captcha.md`. |
 | 5 | **API Consulta CND (Conecta gov.br)** | Certidão federal sem captcha e com registro auditável. O efeito sobre os captchas é pequeno, porque a certidão federal vale 180 dias. O ganho maior é de automação e de prova (`docs/adesao_conecta.md`). |
 | 6 | **Mutirão mensal** | Não reduz o número de captchas. Reduz o tempo: uma sessão fixa por mês, com os portais agrupados (todas as certidões da SEFAZ-X em sequência), em vez de interrupções espalhadas. |
 

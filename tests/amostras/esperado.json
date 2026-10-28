@@ -131,6 +131,19 @@
       "avisos_contem": [],
       "cobertura": null
     },
+    "estadual_sp_unica.pdf": {
+      "descricao": "SP Certidão Única (SIDEB, Sefaz + PGE), validade 90 dias da emissão",
+      "tipo": "estadual",
+      "situacao": "negativa",
+      "cnpj": "12345678000195",
+      "validade": "2027-01-15",
+      "data_emissao": "2026-10-17",
+      "uf": "SP",
+      "municipio": null,
+      "codigo_controle": "SIDEB2026A1B2C3",
+      "avisos_contem": [],
+      "cobertura": null
+    },
     "municipal_sp.pdf": {
       "descricao": "Prefeitura de SP, validade por prazo",
       "tipo": "municipal",

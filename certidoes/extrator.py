@@ -24,6 +24,10 @@ __all__ = [
     "ler_texto",
     "ler_pdf",
     "ler_varios",
+    "abrange_raiz",
+    "e_estadual_unica",
+    "ORGAO_UNICA",
+    "URL_SIDEB",
     "AVISO_ESCANEADO",
     "AVISO_MULTIPLAS",
 ]
@@ -34,6 +38,14 @@ AVISO_MULTIPLAS = "arquivo contém mais de uma certidão; separe os arquivos"
 URL_FEDERAL = "https://servicos.receitafederal.gov.br/servico/certidoes/"
 URL_FGTS = "https://consulta-crf.caixa.gov.br/"
 URL_TST = "https://www.tst.jus.br/certidao1"
+# SP: Certidão Única (Sefaz + PGE) pelo SIDEB. Endereço informado ao projeto; a confirmar.
+URL_SIDEB = "https://www4.fazenda.sp.gov.br/SIDEB/CertidaoNegativaDebitos"
+
+# Convenção para certidão estadual ÚNICA (abrange débitos inscritos E não inscritos em dívida
+# ativa, emitida em conjunto pela Fazenda e pela Procuradoria do Estado): orgao_emissor começa com
+# "SEFAZ+PGE" seguido da UF ("SEFAZ+PGE-SP", "SEFAZ+PGE-RJ"; "SEFAZ+PGE" sem UF identificada).
+# O validador usa esta marca (``e_estadual_unica``) para que ela satisfaça sozinha o item estadual.
+ORGAO_UNICA = "SEFAZ+PGE"
 
 # --------------------------------------------------------------------------------------
 # Normalização
@@ -181,9 +193,14 @@ _ANC_VALIDADE = [
     r"\bVALIDA(?: SOMENTE)? ATE",
     r"\bVALIDADE(?: DA CERTIDAO)?",
 ]
+_NUM_EXTENSO = {
+    "TRINTA": 30, "SESSENTA": 60, "NOVENTA": 90, "CENTO E VINTE": 120, "CENTO E OITENTA": 180,
+    "DUZENTOS E SETENTA": 270, "TRES": 3, "SEIS": 6, "DOZE": 12,
+}
+_N_PRAZO = r"(\d{1,3}|" + "|".join(sorted(_NUM_EXTENSO, key=len, reverse=True)) + r")"
 _RE_VALIDADE_REL = [
-    re.compile(r"\bVALID[AO] (?:PELO PRAZO DE |POR )(\d{1,3})\s*(?:\([^)]*\)\s*)?(DIAS|MESES)"),
-    re.compile(r"\bVALIDADE\s*(?:DE|:|E DE)?\s*(\d{1,3})\s*(?:\([^)]*\)\s*)?(DIAS|MESES)"),
+    re.compile(r"\bVALID[AO] (?:PELO PRAZO DE |POR )" + _N_PRAZO + r"\s*(?:\([^)]*\)\s*)?(DIAS|MESES)\b"),
+    re.compile(r"\bVALIDADE\s*(?:DE|:|E DE)?\s*" + _N_PRAZO + r"\s*(?:\([^)]*\)\s*)?(DIAS|MESES)\b"),
 ]
 
 
@@ -218,7 +235,7 @@ def _validade_relativa(texto: str, emissao: Optional[date]) -> Optional[date]:
             base = d or base
         if not base:
             return None
-        n = int(m.group(1))
+        n = int(m.group(1)) if m.group(1).isdigit() else _NUM_EXTENSO[m.group(1)]
         return base + timedelta(days=n) if m.group(2) == "DIAS" else _somar_meses(base, n)
     return None
 
@@ -565,6 +582,7 @@ _RE_OUTRA = re.compile(
 _RE_ESTADUAL = re.compile(
     r"SECRETARIA (?:DE ESTADO )?(?:DA |DE )?(?:FAZENDA|ECONOMIA|RECEITA|TRIBUTACAO|FINANCAS)|RECEITA ESTADUAL|"
     r"\bSEFAZ\b|PROCURADORIA[- ]GERAL DO ESTADO|DIVIDA ATIVA DO ESTADO|GOVERNO DO ESTADO|FAZENDA ESTADUAL|"
+    r"\bSIDEB\b|"
     r"\bESTADO D[OEA] (?:" + _NOMES_UF + r")\b|\bDISTRITO FEDERAL\b"
 )
 _RE_MUNICIPAL = re.compile(r"PREFEITURA|SECRETARIA MUNICIPAL|TRIBUTOS MOBILIARIOS|FAZENDA MUNICIPAL")
@@ -651,11 +669,58 @@ def _regra_trabalhista(t: _Texto, c: Certidao) -> None:
         c.codigo_controle = m.group(1)
 
 
+# Certidão estadual ÚNICA. Regra genérica (o modelo oficial do SIDEB/SP e da conjunta do RJ
+# não foi confirmado): basta um dos sinais abaixo.
+_RE_UNICA = re.compile(
+    r"\bINSCRITOS (?:E|OU) NAO INSCRITOS\b"          # "débitos inscritos e não inscritos em dívida ativa"
+    r"|\bCERTIDAO UNICA\b"
+    r"|\bSIDEB\b"
+)
+# Conjunta Fazenda + Procuradoria: exige "certidão conjunta"/"emitida conjuntamente" E menção aos
+# dois órgãos ("Resolução Conjunta SF/PGE", rodapé da certidão antiga da SEFAZ-SP, não basta).
+_RE_CONJUNTA = re.compile(r"\bCERTIDAO (?:[A-Z]+ ){0,4}CONJUNTA\b|\bEMITIDA CONJUNTAMENTE\b")
+_RE_FAZENDA = re.compile(r"\bSEFAZ\b|SECRETARIA (?:DE ESTADO )?(?:DA |DE )?(?:FAZENDA|ECONOMIA|RECEITA)")
+_RE_PROCURADORIA = re.compile(r"\bPGE\b|PROCURADORIA[- ]GERAL DO ESTADO")
+
+
+def _estadual_unica(f: str) -> bool:
+    if _RE_UNICA.search(f):
+        return True
+    return bool(_RE_CONJUNTA.search(f) and _RE_FAZENDA.search(f) and _RE_PROCURADORIA.search(f))
+
+
+_RE_ABRANGE_RAIZ = re.compile(
+    r"\bABRANGE(?:NDO)?\b(?: [A-Z]+){0,3} (?:OS |SEUS |AS )?(?:ESTABELECIMENTOS|FILIAIS)\b"
+    r"|\bMATRIZ E (?:SUAS |AS )?FILIAIS\b"
+    r"|\bRAIZ DO CNPJ\b|\bCNPJ (?:BASE|RAIZ)\b"
+)
+
+
+def abrange_raiz(texto: str) -> bool:
+    """True se o texto declara que a certidão vale para todos os estabelecimentos (raiz do CNPJ)."""
+    f = _norm(texto or "")
+    for m in _RE_ABRANGE_RAIZ.finditer(f):
+        if not _negado(f, m.start(), 20):
+            return True
+    return False
+
+
+def e_estadual_unica(c: Certidao) -> bool:
+    """Certidão estadual única (Sefaz + PGE), pela convenção de ``orgao_emissor`` (ORGAO_UNICA)."""
+    return c.tipo == TipoCertidao.ESTADUAL and (c.orgao_emissor or "").upper().startswith(ORGAO_UNICA)
+
+
 def _regra_estadual(t: _Texto, c: Certidao) -> None:
     f = t.plano
     c.uf = _uf(f)
+    if not c.uf and re.search(r"\bSIDEB\b", f):
+        c.uf = "SP"  # SIDEB é o sistema da Sefaz-SP
     sigla = c.uf or "UF?"
-    if re.search(r"NAO INSCRITOS NA DIVIDA ATIVA", f):
+    if _estadual_unica(f):
+        c.orgao_emissor = f"{ORGAO_UNICA}-{c.uf}" if c.uf else ORGAO_UNICA
+        if c.uf == "SP" and not _RE_URL.search(f):
+            c.url_verificacao = URL_SIDEB
+    elif re.search(r"NAO INSCRITOS NA DIVIDA ATIVA", f):
         c.orgao_emissor = f"SEFAZ-{sigla}"
     elif re.search(r"PROCURADORIA[- ]GERAL DO ESTADO|DIVIDA ATIVA DO ESTADO", f):
         c.orgao_emissor = f"PGE-{sigla}"

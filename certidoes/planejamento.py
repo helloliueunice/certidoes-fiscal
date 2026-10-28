@@ -184,7 +184,116 @@ def ler_csvs(conteudos: list[bytes]) -> list[dict]:
     return list(escolhidas.values())
 
 
-# ---------------------------------------------------------------- portais
+# ---------------------------------------------------------------- portais e rotas de acesso
+
+ACESSO_CAPTCHA = "captcha"
+ACESSO_GOVBR = "govbr"
+ACESSO_CERTIFICADO = "certificado"
+ACESSO_LIVRE = "livre"
+ACESSO_DESCONHECIDO = "desconhecido"
+ACESSOS = (ACESSO_CAPTCHA, ACESSO_GOVBR, ACESSO_CERTIFICADO, ACESSO_LIVRE, ACESSO_DESCONHECIDO)
+# Rotas em que o fiscal chega à certidão sem resolver captcha.
+ACESSOS_SEM_CAPTCHA = {ACESSO_GOVBR, ACESSO_LIVRE, ACESSO_CERTIFICADO}
+
+ROTULO_ACESSO = {
+    ACESSO_CAPTCHA: "com captcha",
+    ACESSO_GOVBR: "login gov.br (sem captcha)",
+    ACESSO_CERTIFICADO: "certificado digital",
+    ACESSO_LIVRE: "sem captcha",
+    ACESSO_DESCONHECIDO: "acesso a confirmar",
+}
+# Classe da br-tag do gov.br DS para cada acesso ("" = neutra).
+CLASSE_ACESSO = {ACESSO_CAPTCHA: "warning", ACESSO_GOVBR: "success", ACESSO_LIVRE: "success",
+                 ACESSO_CERTIFICADO: "info", ACESSO_DESCONHECIDO: ""}
+# Equivalente em texto para o Streamlit.
+EMOJI_ACESSO = {ACESSO_CAPTCHA: "🔒", ACESSO_GOVBR: "🟢", ACESSO_LIVRE: "🟢",
+                ACESSO_CERTIFICADO: "🔑", ACESSO_DESCONHECIDO: "❔"}
+
+AVISO_ROTAS = ("Prefira as rotas sem captcha (login gov.br do próprio servidor). "
+               "Nunca use a conta gov.br de outra pessoa.")
+
+
+def acesso_do_portal(p: dict) -> str:
+    """Como o fiscal chega à certidão nesse portal (esquema v2 do catálogo).
+
+    Usa p["acesso"] quando houver um valor conhecido; nos itens antigos deduz de p["captcha"]:
+    True -> "captcha", False -> "livre", None/ausente -> "desconhecido".
+    """
+    acesso = str(p.get("acesso") or "").strip().lower()
+    if acesso in ACESSOS:
+        return acesso
+    captcha = p.get("captcha")
+    if captcha is True:
+        return ACESSO_CAPTCHA
+    if captcha is False:
+        return ACESSO_LIVRE
+    return ACESSO_DESCONHECIDO
+
+
+def _nivel(p: dict) -> Optional[str]:
+    n = str(p.get("nivel_govbr") or "").strip().lower()
+    return n if n in ("bronze", "prata", "ouro") else None
+
+
+def rotulo_acesso(p: dict) -> str:
+    """Rótulo do selo de acesso (ex.: "login gov.br (sem captcha), nível prata")."""
+    acesso = acesso_do_portal(p)
+    rot = ROTULO_ACESSO[acesso]
+    nivel = _nivel(p)
+    if acesso == ACESSO_GOVBR and nivel:
+        rot += f", nível {nivel}"
+    return rot
+
+
+def rotulo_rota(p: dict) -> str:
+    """Rótulo curto para a frase "Melhor rota: <portal> — <rótulo>"."""
+    acesso = acesso_do_portal(p)
+    if acesso == ACESSO_GOVBR:
+        nivel = _nivel(p)
+        return "login gov.br" + (f" nível {nivel}" if nivel else "") + ", sem captcha"
+    return ROTULO_ACESSO[acesso]
+
+
+def _prioridade(p: dict) -> int:
+    try:
+        return int(p.get("prioridade"))
+    except (TypeError, ValueError):
+        return 999
+
+
+def chave_rota(p: dict) -> tuple:
+    """Ordem da melhor rota: sem captcha conhecido, depois a confirmar, por último captcha;
+    dentro de cada grupo, a `prioridade` do catálogo (itens sem prioridade mantêm a ordem)."""
+    acesso = acesso_do_portal(p)
+    grupo = 0 if acesso in ACESSOS_SEM_CAPTCHA else (2 if acesso == ACESSO_CAPTCHA else 1)
+    return (grupo, _prioridade(p))
+
+
+def ordenar_portais(lista: list[dict]) -> list[dict]:
+    """Cópia da lista ordenada pela melhor rota (ordenação estável)."""
+    return sorted(lista, key=chave_rota)
+
+
+def ordenar_por_rota(lista: list[dict], chave_destaque: str = "destaque") -> list[dict]:
+    """Destaque (SICAF) no topo; os tipos na ordem em que aparecem no catálogo; dentro de cada
+    tipo, a melhor rota primeiro (sem captcha, depois a confirmar, por último com captcha)."""
+    ordem_tipo: dict[str, int] = {}
+    for p in lista:
+        ordem_tipo.setdefault(p.get("tipo") or "", len(ordem_tipo))
+    return sorted(lista, key=lambda p: (not p.get(chave_destaque), ordem_tipo[p.get("tipo") or ""],
+                                        chave_rota(p)))
+
+
+def campos_acesso(p: dict) -> dict:
+    """Campos de acesso para as interfaces (selo, nível, validade típica, certidão única)."""
+    acesso = acesso_do_portal(p)
+    validade = p.get("validade_tipica_dias")
+    return {"acesso": acesso, "rotulo_acesso": rotulo_acesso(p), "classe_acesso": CLASSE_ACESSO[acesso],
+            "nivel_govbr": _nivel(p), "prioridade": _prioridade(p),
+            "validade_tipica_dias": validade if isinstance(validade, int) and validade > 0 else None,
+            "certidao_unica": p.get("certidao_unica") if isinstance(p.get("certidao_unica"), bool) else None,
+            "sem_captcha": acesso in ACESSOS_SEM_CAPTCHA}
+
 
 def _portais_do_tipo(tipo: str, uf: str, municipio: str) -> list[dict]:
     try:
@@ -197,7 +306,82 @@ def _portais_do_tipo(tipo: str, uf: str, municipio: str) -> list[dict]:
         if p.get("tipo") != tipo or "verificacao" in (p.get("id") or ""):
             continue
         saida.append({"nome": p.get("nome") or "", "url": p.get("url"), "captcha": p.get("captcha"),
-                      "url_verificacao": p.get("url_verificacao")})
+                      "url_verificacao": p.get("url_verificacao"), **campos_acesso(p)})
+    return ordenar_portais(saida)
+
+
+portais_do_tipo = _portais_do_tipo
+
+
+def _complementares(tipo: str, portais: list[dict]) -> bool:
+    """Estadual com dois ou mais portais e sem certidão única: cada portal emite uma certidão
+    diferente (ex.: SEFAZ para não inscritos + PGE para dívida ativa) e todas são necessárias.
+    Nos demais casos, os portais do mesmo tipo são rotas alternativas para a mesma certidão."""
+    return (tipo == TipoCertidao.ESTADUAL.value and len(portais) > 1
+            and not any(p.get("certidao_unica") is True for p in portais))
+
+
+def rota_do_item(tipo: str, portais: list[dict]) -> dict:
+    """Resumo da rota de um item: melhor portal, se dá para fazer sem captcha e quantos captchas."""
+    if not portais:
+        return {"melhor_rota": None, "rota_sem_captcha": False, "captchas": 0,
+                "acesso_rota": ACESSO_DESCONHECIDO}
+    melhor = portais[0]
+    if _complementares(tipo, portais):
+        sem = all(acesso_do_portal(p) in ACESSOS_SEM_CAPTCHA for p in portais)
+        captchas = sum(1 for p in portais if acesso_do_portal(p) == ACESSO_CAPTCHA)
+        if sem:
+            acesso = acesso_do_portal(melhor)
+        elif captchas:
+            acesso = ACESSO_CAPTCHA
+        else:
+            acesso = ACESSO_DESCONHECIDO
+    else:
+        acesso = acesso_do_portal(melhor)
+        sem = acesso in ACESSOS_SEM_CAPTCHA
+        captchas = 1 if acesso == ACESSO_CAPTCHA else 0
+    return {"melhor_rota": melhor, "rota_sem_captcha": sem, "captchas": captchas, "acesso_rota": acesso}
+
+
+def nota_validade(portais: list[dict]) -> str:
+    """ "nova certidão costuma valer N dias", pela melhor rota que informe a validade típica."""
+    for p in portais:
+        n = p.get("validade_tipica_dias")
+        if isinstance(n, int) and n > 0:
+            return f"nova certidão costuma valer {n} dias"
+    return ""
+
+
+def texto_melhor_rota(p: Optional[dict]) -> str:
+    if not p:
+        return "Melhor rota: portal não catalogado — use o site do emissor"
+    return f"Melhor rota: {p.get('nome') or 'portal do emissor'} — {rotulo_rota(p)}"
+
+
+def sugestoes_de_rota(resultado: ResultadoValidacao) -> list[dict]:
+    """Para os itens PENDENTE ou sem certidão de uma conferência, a melhor rota de emissão.
+
+    Quando o contrato aceita o SICAF, ele entra como rota candidata para federal/FGTS/trabalhista.
+    Só aponta links; o acesso é sempre feito pelo fiscal.
+    """
+    c = resultado.contrato
+    saida = []
+    for i in resultado.itens:
+        if not (i.semaforo == Semaforo.VERMELHO or i.certidao is None):
+            continue
+        candidatos = _portais_do_tipo(i.tipo.value, c.uf_sede, c.municipio_sede)
+        if getattr(c, "aceitar_sicaf", False) and i.tipo.value in TIPOS_SICAF:
+            candidatos = ordenar_portais(
+                candidatos + _portais_do_tipo(TipoCertidao.SICAF.value, c.uf_sede, c.municipio_sede))
+        rota = rota_do_item(i.tipo.value, candidatos)
+        p = rota["melhor_rota"]
+        saida.append({"tipo": i.tipo.value, "rotulo": i.tipo.rotulo, "portal": p,
+                      "texto": texto_melhor_rota(p), "url": (p or {}).get("url"),
+                      "acesso": rota["acesso_rota"],
+                      "rotulo_acesso": rotulo_acesso(p) if p else ROTULO_ACESSO[ACESSO_DESCONHECIDO],
+                      "classe_acesso": CLASSE_ACESSO[rota["acesso_rota"]],
+                      "rota_sem_captcha": rota["rota_sem_captcha"],
+                      "nota_validade": nota_validade(candidatos)})
     return saida
 
 
@@ -274,11 +458,16 @@ def planejar(linhas: list[dict], ate: date, hoje: Optional[date] = None,
                 portais = _portais_do_tipo(ln["tipo"], g["uf_sede"], g["municipio_sede"])
             elif acao == ACAO_SICAF:
                 portais = _portais_do_tipo(TipoCertidao.SICAF.value, g["uf_sede"], g["municipio_sede"])
+            rota = rota_do_item(ln["tipo"] if acao != ACAO_SICAF else TipoCertidao.SICAF.value, portais)
             itens.append({
                 "tipo": ln["tipo"], "rotulo": TipoCertidao(ln["tipo"]).rotulo,
                 "validade": v, "validade_txt": _fmt(v), "status": status, "acao": acao,
                 "via_sicaf": via, "motivo": motivo, "situacao_plano": sit, "portais": portais,
-                "captcha": any(p.get("captcha") is True for p in portais),
+                "captcha": rota["captchas"] > 0,
+                "rota_sem_captcha": rota["rota_sem_captcha"], "acesso_rota": rota["acesso_rota"],
+                "captchas_rota": rota["captchas"],
+                "melhor_rota": rota["melhor_rota"], "melhor_rota_txt": texto_melhor_rota(rota["melhor_rota"]) if portais else "",
+                "nota_validade": nota_validade(portais) if acao in (ACAO_EMITIR, ACAO_SICAF) else "",
                 "semaforo_anterior": ln.get("semaforo") or "",
                 "codigo_controle": ln.get("codigo_controle") or "",
             })
@@ -302,6 +491,9 @@ def _totais(grupos: list[dict]) -> dict:
     sicaf = sum(1 for i in itens if i["acao"] == ACAO_SICAF)
     emitir = [i for i in itens if i["acao"] == ACAO_EMITIR]
     reconferir = sum(1 for i in itens if i["acao"] == ACAO_RECONFERIR)
+    sem_captcha = sum(1 for i in emitir if i.get("rota_sem_captcha"))
+    a_confirmar = sum(1 for i in emitir if not i.get("rota_sem_captcha")
+                      and i.get("acesso_rota", ACESSO_DESCONHECIDO) == ACESSO_DESCONHECIDO)
     return {
         "contratadas": len(grupos),
         "itens": len(itens),
@@ -309,10 +501,14 @@ def _totais(grupos: list[dict]) -> dict:
         "via_sicaf": sicaf,
         "a_emitir": len(emitir),
         "a_reconferir": reconferir,
-        "captchas_evitados": ok + sicaf,
-        # estimativa: um captcha por portal com captcha conhecido
-        "captchas_a_resolver": sum(sum(1 for p in i["portais"] if p.get("captcha") is True)
-                                   for i in emitir),
+        # certidões ainda válidas + itens via SICAF + itens a emitir por rota sem captcha
+        "captchas_evitados": ok + sicaf + sem_captcha,
+        # itens a emitir cuja melhor rota é login gov.br, sem login/captcha ou certificado
+        "sem_captcha_govbr": sem_captcha,
+        # itens a emitir cuja melhor rota tem acesso não confirmado (pode ter captcha)
+        "acesso_a_confirmar": a_confirmar,
+        # estimativa: só portais com acesso == "captcha", seguindo a melhor rota de cada item
+        "captchas_a_resolver": sum(i.get("captchas_rota", 0) for i in emitir),
     }
 
 
@@ -396,7 +592,7 @@ def texto_solicitacao(grupo: dict, prazo_dias: int = 5, orgao: str = "") -> str:
 
 CAMPOS_PLANO = ["contratada", "cnpj", "contrato", "uf_sede", "municipio_sede", "item", "tipo",
                 "validade", "status", "acao", "via_sicaf", "motivo", "portal", "url_portal",
-                "captcha", "feito"]
+                "captcha", "acesso", "feito"]
 
 
 def linhas_plano(grupos: list[dict]) -> list[dict]:
@@ -409,12 +605,15 @@ def linhas_plano(grupos: list[dict]) -> list[dict]:
                     "municipio_sede": g["municipio_sede"], "item": i["rotulo"], "tipo": i["tipo"],
                     "validade": i["validade_txt"], "status": i["status"], "acao": i["acao"],
                     "via_sicaf": "sim" if i["via_sicaf"] else "não", "motivo": i["motivo"],
-                    "portal": "", "url_portal": "", "captcha": "", "feito": ""}
+                    "portal": "", "url_portal": "", "captcha": "", "acesso": "", "feito": ""}
             for p in i["portais"] or [None]:
                 linha = dict(base)
                 if p:
-                    linha.update(portal=p["nome"], url_portal=p["url"] or "",
-                                 captcha={True: "sim", False: "não"}.get(p["captcha"], "não informado"))
+                    acesso = acesso_do_portal(p)
+                    captcha = ("sim" if acesso == ACESSO_CAPTCHA else
+                               "não informado" if acesso == ACESSO_DESCONHECIDO else "não")
+                    linha.update(portal=p["nome"], url_portal=p["url"] or "", captcha=captcha,
+                                 acesso=rotulo_acesso(p))
                 saida.append(linha)
     return saida
 

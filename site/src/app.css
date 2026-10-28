@@ -95,7 +95,7 @@ fieldset { border: 0; padding: 0; margin: 0; }
 .estrategia li { margin-bottom: 4px; }
 
 /* ---------- mutirão */
-.resumo-mutirao { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.resumo-mutirao { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .resumo-mutirao .cartao { margin: 0; }
 .resumo-mutirao .cartao.destaque { background: var(--green-cool-vivid-5, #e3f5e1); }
 .progresso .barra { height: 12px; border-radius: 6px; background: var(--gray-10, #e6e6e6); overflow: hidden; }
@@ -159,3 +159,9 @@ fieldset { border: 0; padding: 0; margin: 0; }
 .exemplo { border-left: 4px solid var(--info, #155bcb); background: var(--blue-warm-vivid-5, #f0f4fd); padding: 12px 16px; border-radius: 6px; }
 .selo-local { display: inline-flex; align-items: center; gap: 6px; }
 .copiavel { user-select: all; }
+
+/* rotas sugeridas no resultado (melhor rota para o que falta) */
+.lista-rotas .br-item { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.lista-rotas .portal-info { flex: 1 1 320px; min-width: 0; }
+.lista-rotas .portal-nome { font-weight: 600; }
+.selo-acesso { margin-right: 6px; }

@@ -127,6 +127,30 @@
     if (erros.length) $(alvo).scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
+  // ------------------------------------------------------------------ selos de acesso
+  // gov.br DS: captcha = warning, gov.br/livre = success, certificado = info, a confirmar = neutra.
+  // Itens antigos do catálogo trazem só "captcha" (true/false/null).
+  const ICONE_ACESSO = { captcha: "fa-lock", govbr: "fa-user-check", livre: "fa-unlock", certificado: "fa-key", desconhecido: "fa-question-circle" };
+  const CLASSE_ACESSO = { captcha: "warning", govbr: "success", livre: "success", certificado: "info", desconhecido: "" };
+  const ROTULO_ACESSO = { captcha: "com captcha", govbr: "login gov.br (sem captcha)", livre: "sem captcha", certificado: "certificado digital", desconhecido: "acesso a confirmar" };
+  const ORDEM_ACESSO = { govbr: 0, livre: 0, certificado: 0, desconhecido: 1, captcha: 2 };
+  function acessoDe(p) {
+    if (p && Object.prototype.hasOwnProperty.call(CLASSE_ACESSO, p.acesso)) return p.acesso;
+    return p && p.captcha === true ? "captcha" : p && p.captcha === false ? "livre" : "desconhecido";
+  }
+  function seloAcesso(p) {
+    const a = acessoDe(p);
+    return '<span class="br-tag small ' + CLASSE_ACESSO[a] + ' selo-acesso"><i class="fas ' + ICONE_ACESSO[a] + '" aria-hidden="true"></i> ' + esc(p.rotulo_acesso || ROTULO_ACESSO[a]) + "</span>";
+  }
+  // Destaque (SICAF) no topo, tipos na ordem do catálogo e, em cada tipo, a rota sem captcha primeiro.
+  function ordenarPorAcesso(lista) {
+    const ordemTipo = {};
+    lista.forEach((p) => { if (!(p.tipo in ordemTipo)) ordemTipo[p.tipo] = Object.keys(ordemTipo).length; });
+    const pri = (p) => (Number.isInteger(p.prioridade) ? p.prioridade : 999);
+    return lista.map((p, i) => [p, i]).sort((x, y) => (!!y[0].destaque - !!x[0].destaque) || ((ordemTipo[x[0].tipo] || 0) - (ordemTipo[y[0].tipo] || 0)) ||
+      (ORDEM_ACESSO[acessoDe(x[0])] - ORDEM_ACESSO[acessoDe(y[0])]) || (pri(x[0]) - pri(y[0])) || (x[1] - y[1])).map((x) => x[0]);
+  }
+
   // ------------------------------------------------------------------ portais
   let timerPortais;
   function marcados() { return $$('#exigidas input:checked').map((i) => i.value); }
@@ -139,14 +163,14 @@
     const tipos = marcados(); if (sicaf && !tipos.includes("sicaf")) tipos.push("sicaf");
     const portais = chamar("portais", uf, mun, JSON.stringify(tipos), sicaf);
     if (!portais.length) { lista.innerHTML = '<p class="text-down-01 m-0 p-2">Nenhum portal cadastrado.</p>'; return; }
-    lista.innerHTML = portais.map((p) => {
-      const captcha = p.captcha === true ? '<span class="br-tag warning small"><i class="fas fa-lock" aria-hidden="true"></i> com captcha</span>'
-        : p.captcha === false ? '<span class="br-tag small">sem captcha</span>' : "";
+    lista.innerHTML = ordenarPorAcesso(portais).map((p) => {
+      const captcha = seloAcesso(p);
       const destaque = p.destaque ? '<span class="br-tag success small"><i class="fas fa-star" aria-hidden="true"></i> comece por aqui</span>' : "";
       const conferir = p.verificado_em ? "" : '<span class="br-tag small">link a confirmar</span>';
       const botao = p.url ? '<a class="br-button secondary small" href="' + esc(p.url) + '" target="_blank" rel="noopener"><i class="fas fa-external-link-alt" aria-hidden="true"></i>Abrir portal<span class="sr-only"> (abre em nova aba)</span></a>' : "";
       return '<div class="br-item' + (p.destaque ? " portal-destaque" : "") + '" role="listitem"><div class="portal-info"><div class="portal-nome">' + esc(p.nome) +
         '</div><div class="mt-half"><span class="br-tag small">' + esc(p.rotulo) + "</span>" + destaque + captcha + conferir + "</div>" +
+        (p.validade_tipica_dias ? '<div class="portal-obs mt-half">Nova certidão costuma valer ' + esc(p.validade_tipica_dias) + " dias.</div>" : "") +
         (p.observacao ? '<div class="portal-obs mt-half">' + esc(p.observacao) + "</div>" : "") + "</div>" + botao + '</div><span class="br-divider"></span>';
     }).join("");
   }
@@ -214,6 +238,13 @@
     $("#res-itens").innerHTML = r.itens.map((i) => "<tr><td data-th=\"Resultado\">" + tag(i.semaforo, i.resultado) + '</td><td data-th="Certidão" class="text-medium">' + esc(i.rotulo) +
       '</td><td data-th="Situação">' + esc(i.situacao) + '</td><td data-th="Validade" class="text-nowrap">' + esc(i.validade) + '</td><td data-th="Observação">' + esc(i.mensagem) +
       '</td><td data-th="Arquivo" class="arquivo">' + esc(i.arquivo) + "</td></tr>").join("");
+    const rotas = r.rotas || [];
+    $("#res-rotas").innerHTML = rotas.length ? '<section class="mt-4" aria-labelledby="t-rotas"><h2 class="h4" id="t-rotas">Onde emitir o que falta</h2><p class="text-down-01 mb-2">' +
+      esc(r.aviso_rotas || "") + ' Nos portais com captcha, é você quem resolve.</p><div class="br-list lista-rotas" role="list">' + rotas.map((x) =>
+        '<div class="br-item" role="listitem"><div class="portal-info"><div class="portal-nome">' + esc(x.rotulo) + '</div><div class="mt-half">' + seloAcesso(x) +
+        '</div><div class="text-down-01 mt-half">' + esc(x.texto) + (x.nota_validade ? " · " + esc(x.nota_validade) : "") + "</div></div>" +
+        (x.url ? '<a class="br-button secondary small" href="' + esc(x.url) + '" target="_blank" rel="noopener"><i class="fas fa-external-link-alt" aria-hidden="true"></i>Abrir portal<span class="sr-only"> (abre em nova aba)</span></a>' : "") +
+        '</div><span class="br-divider"></span>').join("") + "</div></section>" : "";
     $("#res-extras").innerHTML = r.extras.length ? '<h2 class="h4 mt-5">Outros documentos enviados</h2>' + r.extras.map((x) =>
       mensagem(x.alerta ? "danger" : "info", x.arquivo + " (" + x.rotulo + ").", x.nota, x.alerta ? "fa-exclamation-triangle" : "fa-file-alt")).join("") : "";
     $("#res-solicitacao").innerHTML = r.solicitacao ? '<h2 class="h4 mt-5">Pedir as certidões à contratada</h2><div class="solicitacao">' +
@@ -275,11 +306,14 @@
       '<button class="br-button tertiary mb-2" type="button" id="limpar-feitos"><i class="fas fa-eraser" aria-hidden="true"></i>Limpar marcações</button></div></div>' +
       '<div class="resumo resumo-mutirao mb-3">' + cart("", t.contratadas, "fa-building", "Contratadas") + cart("success", t.ok, "fa-check-circle", "Ainda válidas") +
       cart("danger", t.a_emitir, "fa-file-signature", "A emitir") + cart("warning", t.a_reconferir, "fa-search", "A reconferir") + cart("info", t.via_sicaf, "fa-id-card", "Via SICAF") +
-      cart("success destaque", t.captchas_evitados, "fa-unlock", "Captchas evitados") + "</div>" +
-      '<p class="text-down-01 mb-3">Captchas evitados = certidões ainda válidas + itens comprovados pelo SICAF. Estimativa de captchas a resolver hoje: <strong>' + t.captchas_a_resolver + "</strong>.</p>" +
+      cart("success destaque", t.captchas_evitados, "fa-unlock", "Captchas evitados") + cart("success", t.sem_captcha_govbr || 0, "fa-user-check", "Sem captcha (gov.br)") +
+      cart("warning", t.captchas_a_resolver, "fa-lock", "Captchas a resolver") + "</div>" +
+      '<p class="text-down-01 mb-3">Captchas evitados = certidões ainda válidas + itens comprovados pelo SICAF + itens com rota sem captcha (login gov.br do próprio servidor, certificado digital ou portal aberto). ' +
+      "Estimativa de captchas a resolver hoje: <strong>" + t.captchas_a_resolver + "</strong>" +
+      (t.acesso_a_confirmar ? "; mais <strong>" + t.acesso_a_confirmar + "</strong> " + (t.acesso_a_confirmar === 1 ? "item" : "itens") + " com acesso a confirmar (pode haver captcha)" : "") + ".</p>" +
       '<div class="progresso mb-4" aria-live="polite"><div class="d-flex justify-content-between text-down-01 mb-half"><span class="text-medium">Progresso do mutirão</span><span id="progresso-texto">0 de ' + total +
       ' feitos</span></div><div class="barra" role="progressbar" aria-label="Progresso do mutirão" aria-valuemin="0" aria-valuemax="' + total + '" aria-valuenow="0" id="progresso-barra"><span></span></div></div>';
-    if (total) h += mensagem("warning", "Portais com captcha são acessados por você.", 'O botão "Abrir portal" só abre o site oficial em outra aba. Depois de emitir, confira a autenticidade e envie os PDFs na conferência.', "fa-lock");
+    if (total) h += mensagem("warning", "Portais com captcha são acessados por você.", 'Prefira as rotas sem captcha (login gov.br do próprio servidor). Nunca use a conta gov.br de outra pessoa. O botão "Abrir portal" só abre o site oficial em outra aba. Depois de emitir, confira a autenticidade e envie os PDFs na conferência.', "fa-lock");
     p.grupos.forEach((g, n) => {
       const id = "g" + (n + 1), acoes = g.a_emitir.concat(g.consultar_sicaf, g.reconferir);
       h += '<article class="br-card grupo-mutirao" aria-labelledby="' + id + '-t"><div class="card-header"><div class="d-flex flex-wrap align-items-start justify-content-between"><div class="grupo-id">' +
@@ -298,11 +332,13 @@
             (lerFeito(k) ? " checked" : "") + '><label for="' + cid + '">Feito<span class="sr-only"> — ' + esc(i.rotulo) + '</span></label></div><div class="item-info"><div class="item-nome">' + esc(i.rotulo) +
             '</div><div class="mt-half"><span class="br-tag ' + tg[0] + ' small status-tag"><i class="fas ' + tg[1] + '" aria-hidden="true"></i><span>' + tg[2] + "</span></span>" +
             (sicaf ? '<span class="br-tag info small status-tag"><i class="fas fa-id-card" aria-hidden="true"></i><span>consultar SICAF</span></span>' : "") +
-            '</div><div class="text-down-01 mt-half">Validade registrada: <strong>' + esc(i.validade_txt || "—") + "</strong> · " + esc(i.motivo) + '</div></div><div class="item-portais">' +
-            (i.portais.length ? i.portais.map((pt, j) => '<div class="portal-linha">' + (i.portais.length > 1 ? '<div class="portal-obs">' + esc(pt.nome) + "</div>" : "") +
+            '</div><div class="text-down-01 mt-half">Validade registrada: <strong>' + esc(i.validade_txt || "—") + "</strong> · " + esc(i.motivo) + (i.nota_validade ? " · " + esc(i.nota_validade) : "") + "</div>" +
+            (i.acao === "emitir" && i.rota_sem_captcha ? '<div class="text-down-01 mt-half"><i class="fas fa-unlock text-success mr-1" aria-hidden="true"></i>' + esc(i.melhor_rota_txt) + "</div>" : "") +
+            '</div><div class="item-portais">' +
+            (i.portais.length ? ordenarPorAcesso(i.portais).map((pt, j) => '<div class="portal-linha">' + (i.portais.length > 1 ? '<div class="portal-obs">' + esc(pt.nome) + "</div>" : "") +
               (pt.url ? '<a class="br-button secondary small" href="' + esc(pt.url) + '" target="_blank" rel="noopener"><i class="fas fa-external-link-alt" aria-hidden="true"></i>' + (sicaf ? "Abrir SICAF" : "Abrir portal") +
                 (i.portais.length > 1 ? " " + (j + 1) : "") + '<span class="sr-only"> — ' + esc(pt.nome) + " (abre em nova aba)</span></a>" : '<span class="text-down-01">' + esc(pt.nome) + "</span>") +
-              (pt.captcha === true ? '<span class="br-tag warning small"><i class="fas fa-lock" aria-hidden="true"></i> com captcha</span>' : pt.captcha === false ? '<span class="br-tag small">sem captcha</span>' : "") +
+              seloAcesso(pt) + (j === 0 && i.portais.length > 1 && ORDEM_ACESSO[acessoDe(pt)] === 0 ? '<span class="br-tag success small"><i class="fas fa-star" aria-hidden="true"></i> melhor rota</span>' : "") +
               (pt.url_verificacao ? '<a class="br-button tertiary small" href="' + esc(pt.url_verificacao) + '" target="_blank" rel="noopener"><i class="fas fa-shield-alt" aria-hidden="true"></i>Verificar autenticidade</a>' : "") + "</div>").join("")
               : '<span class="text-down-01">Portal não catalogado: use o site do emissor.</span>') + "</div></div>";
         }).join("") + "</div>";

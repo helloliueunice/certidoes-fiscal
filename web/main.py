@@ -99,7 +99,9 @@ templates.env.globals.update(
     NOME_SISTEMA=NOME_SISTEMA, SUBTITULO=SUBTITULO, ROTULO_SEMAFORO=ROTULO_SEMAFORO,
     ROTULO_SITUACAO=ROTULO_SITUACAO, CLASSE_SEMAFORO=CLASSE_SEMAFORO,
     ICONE_SEMAFORO=ICONE_SEMAFORO, formatar_data=formatar_data, validade_item=validade_item, formatar_cnpj=formatar_cnpj,
-    DOC_CONECTA=DOC_CONECTA, AVISO_IA_LGPD=AVISO_IA_LGPD,
+    DOC_CONECTA=DOC_CONECTA, AVISO_IA_LGPD=AVISO_IA_LGPD, AVISO_ROTAS=planejamento.AVISO_ROTAS,
+    ICONE_ACESSO={"captcha": "fa-lock", "govbr": "fa-user-check", "livre": "fa-unlock",
+                  "certificado": "fa-key", "desconhecido": "fa-question-circle"},
 )
 
 
@@ -263,9 +265,10 @@ def api_portais(uf: str = "", municipio: str = "", tipos: str = "", sicaf: str =
                       "url": p.get("url"), "captcha": p.get("captcha"),
                       "observacao": p.get("observacao"), "verificado_em": p.get("verificado_em"),
                       "url_verificacao": p.get("url_verificacao"),
+                      **planejamento.campos_acesso(p),
                       "destaque": destacar_sicaf and tipo == "sicaf"})
-    saida.sort(key=lambda p: not p["destaque"])   # SICAF no topo quando aceito
-    return {"portais": saida}
+    # SICAF no topo quando aceito; em cada tipo, as rotas sem captcha primeiro
+    return {"portais": planejamento.ordenar_por_rota(saida)}
 
 
 @app.post("/api/conecta")
@@ -392,6 +395,7 @@ def ver_resultado(request: Request, chave: str):
         "request": request, "chave": chave, "r": resultado, "resumo": resumo(resultado),
         "extras": extras, "certs": d["certs"], "orgao": d["orgao"],
         "observacoes": d["observacoes"], "solicitacao": solicitacao,
+        "rotas": planejamento.sugestoes_de_rota(resultado),
     })
 
 

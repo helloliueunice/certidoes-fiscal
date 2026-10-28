@@ -162,6 +162,14 @@ def conferir(entrada_json: str) -> str:
     except OSError:
         pass
 
+    rotas = planejamento.sugestoes_de_rota(r)
+    por_tipo = {x["tipo"]: x for x in rotas}
+    for it in itens:
+        x = por_tipo.get(it["tipo"])
+        it["melhor_rota"] = ({"texto": x["texto"], "url": x["url"], "acesso": x["acesso"],
+                              "rotulo_acesso": x["rotulo_acesso"], "classe_acesso": x["classe_acesso"],
+                              "rota_sem_captcha": x["rota_sem_captcha"], "nota_validade": x["nota_validade"]}
+                             if x else None)
     grupo = planejamento.grupo_de_resultado(r)
     solicitacao = None
     if grupo["a_emitir"]:
@@ -183,6 +191,8 @@ def conferir(entrada_json: str) -> str:
         "minuta": {"titulo": titulo, "paragrafos": [html.unescape(p) for p in pars]},
         "checklist_manual": CHECKLIST_MANUAL, "aviso_rodape": AVISO_RODAPE,
         "csv": csv_texto, "solicitacao": solicitacao,
+        "rotas": [{k: v for k, v in x.items() if k != "portal"} for x in rotas],
+        "aviso_rotas": planejamento.AVISO_ROTAS,
         "nome_base": f"checklist_{num}_{comp}",
     })
 
@@ -240,10 +250,10 @@ def portais(uf: str, municipio: str, tipos_json: str = "[]", sicaf: bool = False
         saida.append({"nome": p.get("nome"), "tipo": tipo, "rotulo": rotulo, "url": p.get("url"),
                       "captcha": p.get("captcha"), "observacao": p.get("observacao"),
                       "verificado_em": p.get("verificado_em"),
+                      "url_verificacao": p.get("url_verificacao"),
+                      **planejamento.campos_acesso(p),
                       "destaque": bool(sicaf and tipo == "sicaf")})
-    if sicaf:
-        saida.sort(key=lambda x: not x["destaque"])
-    return _json(saida)
+    return _json(planejamento.ordenar_por_rota(saida))
 
 
 def data_corte_padrao(hoje_iso: Optional[str] = None) -> str:

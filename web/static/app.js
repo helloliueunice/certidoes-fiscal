@@ -106,6 +106,29 @@
   const lista = $("#lista-portais");
   let timer;
   function esc(s) { const d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
+  // Selo de acesso (gov.br DS): captcha = warning, gov.br/livre = success, certificado = info,
+  // a confirmar = neutra. Itens antigos do catálogo trazem só "captcha" (true/false/null).
+  const ICONE_ACESSO = { captcha: "fa-lock", govbr: "fa-user-check", livre: "fa-unlock", certificado: "fa-key", desconhecido: "fa-question-circle" };
+  const CLASSE_ACESSO = { captcha: "warning", govbr: "success", livre: "success", certificado: "info", desconhecido: "" };
+  const ROTULO_ACESSO = { captcha: "com captcha", govbr: "login gov.br (sem captcha)", livre: "sem captcha", certificado: "certificado digital", desconhecido: "acesso a confirmar" };
+  function acessoDe(p) {
+    if (p && CLASSE_ACESSO.hasOwnProperty(p.acesso)) return p.acesso;
+    return p && p.captcha === true ? "captcha" : p && p.captcha === false ? "livre" : "desconhecido";
+  }
+  const ORDEM_ACESSO = { govbr: 0, livre: 0, certificado: 0, desconhecido: 1, captcha: 2 };
+  function seloAcesso(p) {
+    const a = acessoDe(p), rot = p.rotulo_acesso || ROTULO_ACESSO[a];
+    return '<span class="br-tag small ' + CLASSE_ACESSO[a] + '"><i class="fas ' + ICONE_ACESSO[a] + '" aria-hidden="true"></i> ' + esc(rot) + "</span>";
+  }
+  // Destaque no topo, tipos na ordem do catálogo e, em cada tipo, a rota sem captcha primeiro.
+  function ordenarPorAcesso(lista) {
+    const ordemTipo = {};
+    lista.forEach((p) => { if (!(p.tipo in ordemTipo)) ordemTipo[p.tipo] = Object.keys(ordemTipo).length; });
+    const pri = (p) => (Number.isInteger(p.prioridade) ? p.prioridade : 999);
+    return lista.map((p, i) => [p, i]).sort((x, y) => (!!y[0].destaque - !!x[0].destaque) || (ordemTipo[x[0].tipo] - ordemTipo[y[0].tipo]) ||
+      (ORDEM_ACESSO[acessoDe(x[0])] - ORDEM_ACESSO[acessoDe(y[0])]) || (pri(x[0]) - pri(y[0])) || (x[1] - y[1])).map((x) => x[0]);
+  }
+  window.SeloAcesso = { selo: seloAcesso, acesso: acessoDe, ordenar: ordenarPorAcesso };
   function tiposMarcados() {
     return Array.from(document.querySelectorAll('input[name="exigidas"]:checked')).map((i) => i.value).join(",");
   }
@@ -123,10 +146,8 @@
       const r = await fetch("/api/portais?" + q);
       const { portais } = await r.json();
       if (!portais.length) { lista.innerHTML = '<p class="text-down-01 m-0 p-2">Nenhum portal cadastrado.</p>'; return; }
-      lista.innerHTML = portais.map((p) => {
-        const captcha = p.captcha === true
-          ? '<span class="br-tag warning small"><i class="fas fa-lock" aria-hidden="true"></i> com captcha</span>'
-          : p.captcha === false ? '<span class="br-tag small">sem captcha</span>' : "";
+      lista.innerHTML = ordenarPorAcesso(portais).map((p) => {
+        const captcha = seloAcesso(p);
         const conferir = p.verificado_em ? "" : '<span class="br-tag small">link a confirmar</span>';
         const botao = p.url
           ? `<a class="br-button secondary small" href="${esc(p.url)}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt" aria-hidden="true"></i>Abrir portal</a>`
@@ -138,6 +159,7 @@
         return `<div class="br-item${p.destaque ? " portal-destaque" : ""}" role="listitem">
           <div class="portal-info"><div class="portal-nome">${esc(p.nome)}</div>
           <div class="mt-half">${destaque}<span class="br-tag small">${esc(p.rotulo)}</span>${captcha}${conferir}</div>${dica}
+          ${p.validade_tipica_dias ? `<div class="portal-obs mt-half">Nova certidão costuma valer ${esc(p.validade_tipica_dias)} dias.</div>` : ""}
           ${p.observacao ? `<div class="portal-obs mt-half">${esc(p.observacao)}</div>` : ""}</div>${botao}</div>
           <span class="br-divider"></span>`;
       }).join("");

@@ -413,3 +413,82 @@ def test_api_conecta_origem_e_limite_compartilhado(cliente, monkeypatch):
     r = cliente.post("/api/conecta", data={"cnpj": CNPJ}, headers=ORIGEM)
     assert r.status_code == 429 and "Limite" in r.json()["mensagem"]
     assert cliente.post("/conecta/cnd.pdf", data={"cnpj": CNPJ}, headers=ORIGEM).status_code == 429
+
+
+# ---------------------------------------------------------------- selos de acesso e melhor rota
+
+_CAT_V2 = [
+    {"id": "rfb", "nome": "Receita (portal)", "tipo": "federal", "url": "https://rfb.exemplo.gov.br",
+     "acesso": "captcha", "captcha": True, "prioridade": 2, "verificado_em": "2026-10-27"},
+    {"id": "rfb_govbr", "nome": "Receita (gov.br)", "tipo": "federal", "url": "https://gov.exemplo.gov.br",
+     "acesso": "govbr", "captcha": False, "nivel_govbr": "prata", "prioridade": 1,
+     "validade_tipica_dias": 180, "verificado_em": "2026-10-27"},
+    {"id": "caixa", "nome": "Caixa CRF", "tipo": "fgts", "url": "https://caixa.exemplo.gov.br", "captcha": True},
+    {"id": "tst", "nome": "TST", "tipo": "trabalhista", "url": "https://tst.exemplo.jus.br", "captcha": None},
+    {"id": "sefaz", "nome": "SEFAZ", "tipo": "estadual", "url": "https://sefaz.exemplo.gov.br",
+     "acesso": "certificado", "captcha": False},
+    {"id": "pref", "nome": "Prefeitura", "tipo": "municipal", "url": "https://pref.exemplo.gov.br",
+     "acesso": "livre", "captcha": False},
+]
+
+
+@pytest.fixture
+def catalogo_v2(monkeypatch):
+    from certidoes import portais
+    monkeypatch.setattr(portais, "portais_para", lambda uf, mun, caminho=None: [dict(p) for p in _CAT_V2])
+
+
+def test_api_portais_acesso_e_ordem(cliente, catalogo_v2):
+    r = cliente.get("/api/portais", params={"uf": "SP", "municipio": "São Paulo"}).json()["portais"]
+    fed = [p for p in r if p["tipo"] == "federal"]
+    assert [p["nome"] for p in fed] == ["Receita (gov.br)", "Receita (portal)"]
+    assert fed[0]["acesso"] == "govbr" and fed[0]["classe_acesso"] == "success"
+    assert fed[0]["rotulo_acesso"] == "login gov.br (sem captcha), nível prata"
+    assert fed[0]["validade_tipica_dias"] == 180
+    por_id = {p["nome"]: p for p in r}
+    assert por_id["Caixa CRF"]["acesso"] == "captcha" and por_id["Caixa CRF"]["classe_acesso"] == "warning"
+    assert por_id["TST"]["acesso"] == "desconhecido" and por_id["TST"]["classe_acesso"] == ""
+    assert por_id["SEFAZ"]["classe_acesso"] == "info"
+
+
+def test_api_portais_catalogo_real_tem_acesso(cliente):
+    r = cliente.get("/api/portais", params={"uf": "SP", "municipio": "São Paulo"}).json()["portais"]
+    assert r and all(p["acesso"] in ("captcha", "govbr", "certificado", "livre", "desconhecido") for p in r)
+
+
+def test_inicio_aviso_rotas(cliente):
+    t = cliente.get("/").text
+    assert "Prefira as rotas sem captcha (login gov.br do próprio servidor)." in t
+    assert "Nunca use a conta gov.br de outra pessoa." in t
+
+
+def test_resultado_melhor_rota(cliente, catalogo_v2):
+    r = cliente.post("/conferir", data=_form(), files=_arquivos("fgts_regular"))
+    t = r.text
+    assert "Onde emitir o que falta" in t
+    assert "Melhor rota: Receita (gov.br) — login gov.br nível prata, sem captcha" in t
+    assert "nova certidão costuma valer 180 dias" in t
+    assert "br-tag small success selo-acesso" in t
+
+
+def test_mutirao_selos_e_totais(cliente, catalogo_v2):
+    antigo = ("data_referencia;competencia;contrato;cnpj;razao_social;fiscal;item;semaforo;resultado;"
+              "situacao;validade;codigo_controle;arquivo;mensagem;apto_atesto\r\n"
+              "01/09/2026;08/2026;777/2025;11.222.333/0001-81;ALFA LTDA;Fulano;Receita Federal / PGFN;"
+              "verde;OK;Negativa;05/09/2026;;f.pdf;ok;sim\r\n"
+              "01/09/2026;08/2026;777/2025;11.222.333/0001-81;ALFA LTDA;Fulano;FGTS (CRF - Caixa);"
+              "verde;OK;Regular;05/09/2026;;g.pdf;ok;sim\r\n"
+              "01/09/2026;08/2026;777/2025;11.222.333/0001-81;ALFA LTDA;Fulano;Trabalhista (CNDT - TST);"
+              "verde;OK;Negativa;05/09/2026;;t.pdf;ok;sim\r\n").encode("utf-8-sig")
+    ate = date.today() + timedelta(days=20)
+    r = cliente.post("/mutirao", data={"ate": ate.isoformat()}, files=[("csvs", ("b.csv", antigo, "text/csv"))])
+    assert r.status_code == 200
+    t = r.text
+    assert "Sem captcha (gov.br)" in t and "Captchas a resolver" in t
+    assert re.search(r"<strong>1</strong>\s+item com acesso a confirmar", t)
+    assert "login gov.br (sem captcha), nível prata" in t and "melhor rota" in t
+    assert "Melhor rota: Receita (gov.br)" in t
+    assert t.index("Receita (gov.br)") < t.index("Receita (portal)")
+    assert "Nunca use a conta gov.br de outra pessoa." in t
+    m = re.search(r'<span class="num">(\d+)</span><span class="rot"><i class="fas fa-lock" aria-hidden="true"></i> Captchas a resolver', t)
+    assert m and m.group(1) == "1"   # só a Caixa (acesso == captcha); TST é "a confirmar"

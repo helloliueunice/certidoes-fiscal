@@ -124,8 +124,10 @@ def test_planejar_datas_de_corte(tmp_path):
     assert st["municipal"]["status"] == "emitir" and "PENDENTE" in st["municipal"]["motivo"]
     # portais anexados aos itens a emitir; SP tem dois portais estaduais
     assert st["federal"]["portais"] == []
-    assert len(st["estadual"]["portais"]) == 2
-    assert st["fgts"]["captcha"] is True and st["fgts"]["portais"][0]["url"].startswith("https://")
+    assert len(st["estadual"]["portais"]) >= 2
+    # "captcha" do item acompanha a melhor rota (o catálogo real pode mudar de acesso)
+    assert st["fgts"]["captcha"] is (st["fgts"]["acesso_rota"] == "captcha")
+    assert st["fgts"]["portais"][0]["url"].startswith("https://")
     federais = pl._portais_do_tipo("federal", "SP", "São Paulo")   # só emissão, sem a de verificação
     assert len(federais) == 1 and not federais[0]["nome"].startswith("Confirmação")
     t = g["totais"]
@@ -205,7 +207,8 @@ def test_grupo_de_resultado_e_csv_plano(tmp_path):
     assert list(plano[0].keys()) == pl.CAMPOS_PLANO
     assert {l["tipo"] for l in plano} == {"federal", "fgts", "trabalhista"}
     fgts = next(l for l in plano if l["tipo"] == "fgts")
-    assert fgts["status"] == "emitir" and fgts["captcha"] == "sim" and fgts["url_portal"].startswith("https://")
+    assert fgts["status"] == "emitir" and fgts["url_portal"].startswith("https://")
+    assert fgts["captcha"] == {"com captcha": "sim", "acesso a confirmar": "não informado"}.get(fgts["acesso"], "não")
 
 
 def test_reconferir_amarelo_por_outro_motivo(tmp_path):
@@ -260,3 +263,141 @@ def test_texto_solicitacao_conforme_contrato(tmp_path):
     t = " ".join(pl.texto_solicitacao(g).split())
     assert "conforme previsto no contrato" in t and "art. 92, XVI" in t
     assert "nota fiscal apresentada" not in t
+
+
+# ---------------------------------------------------------------- rotas sem captcha (esquema v2)
+
+CATALOGO_V2 = [
+    # catálogo em ordem "ruim": a rota com captcha vem antes da rota gov.br
+    {"id": "rfb", "nome": "Receita (portal)", "tipo": "federal", "url": "https://rfb.exemplo.gov.br",
+     "acesso": "captcha", "captcha": True, "prioridade": 2, "validade_tipica_dias": 180},
+    {"id": "rfb_govbr", "nome": "Receita (e-CAC gov.br)", "tipo": "federal", "url": "https://gov.exemplo.gov.br",
+     "acesso": "govbr", "captcha": False, "nivel_govbr": "prata", "prioridade": 1, "validade_tipica_dias": 180},
+    {"id": "rfb_verificacao", "nome": "Verificação", "tipo": "federal", "url": "https://v.exemplo.gov.br",
+     "acesso": "livre", "captcha": False},
+    # item antigo, sem os campos novos
+    {"id": "caixa", "nome": "Caixa CRF", "tipo": "fgts", "url": "https://caixa.exemplo.gov.br", "captcha": True,
+     "validade_tipica_dias": 30},
+    {"id": "tst", "nome": "TST CNDT", "tipo": "trabalhista", "url": "https://tst.exemplo.jus.br",
+     "acesso": "captcha", "captcha": True, "prioridade": 1},
+    # estadual com duas certidões complementares (sem certidão única)
+    {"id": "sefaz", "nome": "SEFAZ", "tipo": "estadual", "url": "https://sefaz.exemplo.gov.br",
+     "acesso": "govbr", "captcha": False, "certidao_unica": False, "prioridade": 1},
+    {"id": "pge", "nome": "PGE", "tipo": "estadual", "url": "https://pge.exemplo.gov.br",
+     "acesso": "captcha", "captcha": True, "certidao_unica": False, "prioridade": 2},
+    {"id": "pref", "nome": "Prefeitura", "tipo": "municipal", "url": "https://pref.exemplo.gov.br",
+     "acesso": "livre", "captcha": False},
+    {"id": "sicaf", "nome": "SICAF", "tipo": "sicaf", "url": "https://sicaf.exemplo.gov.br",
+     "acesso": "govbr", "captcha": False},
+]
+CATALOGO_V1 = [{k: v for k, v in p.items() if k in ("id", "nome", "tipo", "url", "captcha")}
+               for p in CATALOGO_V2]
+for _p in CATALOGO_V1:
+    if _p["id"] in ("pref", "sefaz"):
+        _p["captcha"] = None          # antigo, não confirmado
+
+
+def _catalogo(monkeypatch, itens):
+    from certidoes import portais
+    monkeypatch.setattr(portais, "portais_para", lambda uf, mun, caminho=None: [dict(p) for p in itens])
+
+
+def _linhas_vencidas(tipos=("federal", "fgts", "trabalhista", "estadual", "municipal")):
+    return [{"cnpj": CNPJ, "contrato": "12/2026", "razao_social": "Empresa", "uf_sede": "SP",
+             "municipio_sede": "São Paulo", "tipo": t, "validade": HOJE - timedelta(days=3),
+             "semaforo": "vermelho", "data_referencia": HOJE} for t in tipos]
+
+
+def test_acesso_do_portal_antigo_e_novo():
+    assert pl.acesso_do_portal({"captcha": True}) == "captcha"
+    assert pl.acesso_do_portal({"captcha": False}) == "livre"
+    assert pl.acesso_do_portal({"captcha": None}) == "desconhecido"
+    assert pl.acesso_do_portal({}) == "desconhecido"
+    assert pl.acesso_do_portal({"acesso": "govbr", "captcha": False}) == "govbr"
+    assert pl.acesso_do_portal({"acesso": "certificado"}) == "certificado"
+    assert pl.acesso_do_portal({"acesso": "invalido", "captcha": True}) == "captcha"
+    assert pl.rotulo_acesso({"captcha": True}) == "com captcha"
+    assert pl.rotulo_acesso({"acesso": "govbr"}) == "login gov.br (sem captcha)"
+    assert pl.rotulo_acesso({"acesso": "govbr", "nivel_govbr": "prata"}) == "login gov.br (sem captcha), nível prata"
+    assert pl.rotulo_acesso({"acesso": "certificado"}) == "certificado digital"
+    assert pl.rotulo_acesso({"acesso": "livre"}) == "sem captcha"
+    assert pl.rotulo_acesso({}) == "acesso a confirmar"
+    assert pl.CLASSE_ACESSO["captcha"] == "warning" and pl.CLASSE_ACESSO["govbr"] == "success"
+    assert pl.CLASSE_ACESSO["certificado"] == "info" and pl.CLASSE_ACESSO["desconhecido"] == ""
+
+
+def test_ordenacao_melhor_rota(monkeypatch):
+    _catalogo(monkeypatch, CATALOGO_V2)
+    fed = pl._portais_do_tipo("federal", "SP", "São Paulo")
+    assert [p["nome"] for p in fed] == ["Receita (e-CAC gov.br)", "Receita (portal)"]   # sem a verificação
+    assert fed[0]["acesso"] == "govbr" and fed[0]["nivel_govbr"] == "prata" and fed[0]["sem_captcha"]
+    lista = pl.ordenar_portais([{"acesso": "captcha", "prioridade": 1}, {"captcha": None},
+                                {"acesso": "certificado", "prioridade": 3}, {"acesso": "livre", "prioridade": 2}])
+    assert [pl.acesso_do_portal(p) for p in lista] == ["livre", "certificado", "desconhecido", "captcha"]
+
+
+def test_planejar_rotas_e_contagem_de_captchas(monkeypatch):
+    _catalogo(monkeypatch, CATALOGO_V2)
+    g = pl.planejar(_linhas_vencidas(), ate=ATE, hoje=HOJE)[0]
+    it = {i["tipo"]: i for i in g["itens"]}
+    assert it["federal"]["rota_sem_captcha"] is True and it["federal"]["portais"][0]["acesso"] == "govbr"
+    assert it["federal"]["melhor_rota_txt"] == "Melhor rota: Receita (e-CAC gov.br) — login gov.br nível prata, sem captcha"
+    assert it["federal"]["nota_validade"] == "nova certidão costuma valer 180 dias"
+    assert it["fgts"]["rota_sem_captcha"] is False and it["fgts"]["captcha"] is True     # item antigo
+    assert it["fgts"]["nota_validade"] == "nova certidão costuma valer 30 dias"
+    assert it["trabalhista"]["nota_validade"] == ""
+    # SEFAZ (gov.br) + PGE (captcha): as duas certidões são necessárias
+    assert it["estadual"]["rota_sem_captcha"] is False and it["estadual"]["captchas_rota"] == 1
+    assert it["municipal"]["rota_sem_captcha"] is True
+    t = pl.totalizar([g])
+    assert t["a_emitir"] == 5
+    assert t["captchas_a_resolver"] == 3            # FGTS, TST, PGE
+    assert t["sem_captcha_govbr"] == 2              # federal (gov.br) e municipal (livre)
+    assert t["acesso_a_confirmar"] == 0
+    assert t["captchas_evitados"] == 2              # 0 válidas + 0 SICAF + 2 sem captcha
+
+
+def test_planejar_certidao_unica_e_alternativas(monkeypatch):
+    cat = [dict(p, certidao_unica=True) if p["tipo"] == "estadual" else p for p in CATALOGO_V2]
+    _catalogo(monkeypatch, cat)
+    g = pl.planejar(_linhas_vencidas(("estadual",)), ate=ATE, hoje=HOJE)[0]
+    assert g["itens"][0]["rota_sem_captcha"] is True and pl.totalizar([g])["captchas_a_resolver"] == 0
+
+
+def test_planejar_catalogo_antigo(monkeypatch):
+    _catalogo(monkeypatch, CATALOGO_V1)
+    g = pl.planejar(_linhas_vencidas(), ate=ATE, hoje=HOJE)[0]
+    t = pl.totalizar([g])
+    # federal: captcha + "livre" (captcha False) -> rota sem captcha; municipal: desconhecido
+    assert t["sem_captcha_govbr"] == 1 and t["acesso_a_confirmar"] == 1
+    assert t["captchas_a_resolver"] == 3          # fgts, tst, pge (sefaz desconhecido não conta)
+    for i in g["itens"]:
+        for p in i["portais"]:
+            assert p["acesso"] in pl.ACESSOS and p["rotulo_acesso"]
+
+
+def test_planejar_sicaf_nao_conta_captcha(monkeypatch):
+    _catalogo(monkeypatch, CATALOGO_V2)
+    g = pl.planejar(_linhas_vencidas(("federal", "fgts")), ate=ATE, hoje=HOJE, aceitar_sicaf=True)[0]
+    t = pl.totalizar([g])
+    assert t["via_sicaf"] == 2 and t["captchas_a_resolver"] == 0 and t["captchas_evitados"] == 2
+
+
+def test_csv_plano_tem_acesso(monkeypatch):
+    _catalogo(monkeypatch, CATALOGO_V2)
+    g = pl.planejar(_linhas_vencidas(("federal",)), ate=ATE, hoje=HOJE)
+    linhas = pl.linhas_plano(g)
+    assert "acesso" in pl.CAMPOS_PLANO
+    assert linhas[0]["acesso"].startswith("login gov.br") and linhas[0]["captcha"] == "não"
+    assert linhas[1]["acesso"] == "com captcha" and linhas[1]["captcha"] == "sim"
+
+
+def test_sugestoes_de_rota_na_conferencia(monkeypatch):
+    _catalogo(monkeypatch, CATALOGO_V2)
+    itens = [ItemChecklist(tipo=T.FEDERAL, semaforo=Semaforo.VERMELHO, mensagem="não enviada"),
+             ItemChecklist(tipo=T.FGTS, semaforo=Semaforo.VERDE, mensagem="ok",
+                           certidao=_cert(T.FGTS, HOJE + timedelta(days=20)))]
+    rotas = pl.sugestoes_de_rota(_resultado(itens))
+    assert len(rotas) == 1 and rotas[0]["tipo"] == "federal"
+    assert rotas[0]["texto"] == "Melhor rota: Receita (e-CAC gov.br) — login gov.br nível prata, sem captcha"
+    assert rotas[0]["rota_sem_captcha"] and rotas[0]["url"] == "https://gov.exemplo.gov.br"

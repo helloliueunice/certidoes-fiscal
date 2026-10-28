@@ -4,6 +4,15 @@
 > Os ofícios **perguntam** se há canal institucional. Não pedem acesso privilegiado, não pedem
 > dispensa de captcha em portal público e não propõem nenhuma forma de contorná-lo.
 > Pesquisa prévia feita em 27/10/2026. As fontes estão em `docs/fontes.md`.
+>
+> **Fundamentação de desburocratização e interoperabilidade** (Lei nº 14.129/2021, Lei nº 13.726/2018,
+> Decreto nº 10.046/2019 e Decreto nº 9.094/2017), com o alcance de cada norma: ver
+> `docs/plano_minimizacao_captcha.md`, seção 5. Para **pedir formalmente** o canal, e não apenas
+> perguntar se ele existe, use o requerimento em `docs/requerimento_canal_sem_captcha.md`, Parte A.
+> Se quiser reforçar estes ofícios, acrescente ao item 1 a frase opcional: "O pedido se alinha aos
+> princípios de atuação integrada e de interoperabilidade da Lei nº 14.129/2021 (art. 3º, incisos IX
+> e XIV)." Em ofícios a Estados e Municípios, verifique antes se o ente adotou a lei por ato próprio
+> (art. 2º, inciso III).
 
 ## Resultado da pesquisa prévia (não integra os ofícios)
 
@@ -14,6 +23,8 @@
 | TST/CSJT (CNDT) | — | **Não localizei** webservice público para órgãos. O SICAF já obtém a CNDT por integração direta (item "Automática"). |
 | Fazenda estadual | — | **Não localizei** integração das SEFAZ com o SICAF. No nível IV do SICAF (estadual e municipal), o próprio fornecedor faz o upload do documento. |
 | Fazenda municipal | — | **Não localizei** integração com o SICAF nem serviço de consulta em lote. |
+
+Rechecagem do catálogo do Conecta gov.br em 27/10/2026: não há API de CRF/FGTS, de CNDT nem de certidões estaduais ou municipais. Há APIs de CNPJ, Dívida Ativa da União e CADIN, que não substituem certidão.
 
 Também existem APIs **comerciais** que consultam esses portais (uma delas oferece consulta de CRF e de CNDT). Elas **não são canais oficiais** e podem funcionar automatizando portais protegidos. Por isso **não devem ser usadas** (CLAUDE.md, princípios 1 e 2).
 

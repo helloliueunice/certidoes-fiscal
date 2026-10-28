@@ -679,3 +679,128 @@ def test_sicaf_so_com_chave_reservada_nao_comprova():
     res = validar(contrato_sicaf(exigidas=[T.FGTS]), [s], hoje=HOJE)
     assert res.itens[0].semaforo == Semaforo.VERMELHO
     assert "sem itens de regularidade" in nota_extra(s, res)
+
+
+# ---------------------------------------------------------------- estadual única (Sefaz + PGE)
+
+MSG_UNICA = "Certidão única estadual (débitos inscritos e não inscritos em dívida ativa)"
+
+
+def unica(uf="SP", **kw):
+    kw.setdefault("arquivo", "unica.pdf")
+    return cert(T.ESTADUAL, uf=uf, orgao_emissor=f"SEFAZ+PGE-{uf}", **kw)
+
+
+def test_sp_unica_sozinha_verde():
+    c = contrato(uf="SP", mun="São Paulo", exigidas=[T.ESTADUAL])
+    res = validar(c, [unica()], hoje=HOJE)
+    i = res.itens[0]
+    assert i.semaforo == Semaforo.VERDE
+    assert MSG_UNICA in i.mensagem
+    assert "falta uma" not in i.mensagem
+    assert res.apto_atesto and not res.extras
+
+
+def test_sp_unica_mais_pge_antiga_verde_sem_alerta_de_falta():
+    c = contrato(uf="SP", mun="São Paulo", exigidas=[T.ESTADUAL])
+    u = unica(data_emissao=HOJE - timedelta(days=2))
+    pge = cert(T.ESTADUAL, uf="SP", orgao_emissor="PGE-SP", arquivo="pge.pdf",
+               data_emissao=HOJE - timedelta(days=40))
+    res = validar(c, [pge, u], hoje=HOJE)
+    i = res.itens[0]
+    assert i.semaforo == Semaforo.VERDE and i.certidao is u
+    assert "falta uma" not in i.mensagem and MSG_UNICA in i.mensagem
+    assert res.extras == [pge]
+    nota = nota_extra(pge, res)
+    assert "certidão única" in nota and "Complementa" not in nota
+    assert alerta_extra(pge, res) == ""
+
+
+def test_sp_unica_mais_par_antigo_mais_recente_usa_o_par():
+    c = contrato(uf="SP", mun="São Paulo", exigidas=[T.ESTADUAL])
+    u = unica(data_emissao=HOJE - timedelta(days=60), dias=30)
+    pge = cert(T.ESTADUAL, uf="SP", orgao_emissor="PGE-SP", arquivo="pge.pdf", data_emissao=HOJE - timedelta(days=5))
+    sefaz = cert(T.ESTADUAL, uf="SP", orgao_emissor="SEFAZ-SP", arquivo="sefaz.pdf",
+                 data_emissao=HOJE - timedelta(days=5))
+    res = validar(c, [u, pge, sefaz], hoje=HOJE)
+    i = res.itens[0]
+    assert i.semaforo == Semaforo.VERDE and i.certidao in (pge, sefaz)
+    assert "falta uma" not in i.mensagem
+    assert u in res.extras
+
+
+def test_sp_unica_positiva_mais_recente_prevalece_sobre_par_antigo():
+    c = contrato(uf="SP", mun="São Paulo", exigidas=[T.ESTADUAL])
+    u = unica(situacao=Situacao.POSITIVA, data_emissao=HOJE - timedelta(days=1))
+    pge = cert(T.ESTADUAL, uf="SP", orgao_emissor="PGE-SP", arquivo="pge.pdf", data_emissao=HOJE - timedelta(days=30))
+    sefaz = cert(T.ESTADUAL, uf="SP", orgao_emissor="SEFAZ-SP", arquivo="sefaz.pdf",
+                 data_emissao=HOJE - timedelta(days=30))
+    res = validar(c, [u, pge, sefaz], hoje=HOJE)
+    assert res.itens[0].semaforo == Semaforo.VERMELHO and res.itens[0].certidao is u
+
+
+def test_sp_so_pge_continua_vermelho_mesmo_com_unica_de_outra_uf():
+    c = contrato(uf="SP", mun="São Paulo", exigidas=[T.ESTADUAL])
+    pge = cert(T.ESTADUAL, uf="SP", orgao_emissor="PGE-SP", arquivo="pge.pdf")
+    res = validar(c, [pge, unica(uf="RJ")], hoje=HOJE)
+    i = res.itens[0]
+    assert i.semaforo == Semaforo.VERMELHO
+    assert "falta uma (SEFAZ (débitos não inscritos))" in i.mensagem
+
+
+def test_sp_unica_vencida_vermelho():
+    c = contrato(uf="SP", mun="São Paulo", exigidas=[T.ESTADUAL])
+    i = validar(c, [unica(dias=-1)], hoje=HOJE).itens[0]
+    assert i.semaforo == Semaforo.VERMELHO
+    assert "Vencida em 26/10/2026." in i.mensagem
+
+
+def test_unica_outra_uf_verde_com_mensagem():
+    c = contrato(uf="RJ", mun="Rio de Janeiro", exigidas=[T.ESTADUAL])
+    i = validar(c, [unica(uf="RJ")], hoje=HOJE).itens[0]
+    assert i.semaforo == Semaforo.VERDE and MSG_UNICA in i.mensagem
+
+
+def test_unica_de_matriz_cobre_filial_quando_texto_abrange_raiz():
+    c = contrato(uf="SP", mun="São Paulo", exigidas=[T.ESTADUAL])
+    c.cnpj = FILIAL
+    u = unica(cnpj=CNPJ, texto="A certidão abrange todos os estabelecimentos da empresa (raiz do CNPJ).")
+    i = validar(c, [u], hoje=HOJE).itens[0]
+    assert i.semaforo == Semaforo.VERDE
+    assert "abrange matriz e filiais" in i.mensagem
+
+
+def test_unica_de_matriz_sem_abrangencia_no_texto_amarelo():
+    c = contrato(uf="SP", mun="São Paulo", exigidas=[T.ESTADUAL])
+    c.cnpj = FILIAL
+    i = validar(c, [unica(cnpj=CNPJ)], hoje=HOJE).itens[0]
+    assert i.semaforo == Semaforo.AMARELO
+    assert "outro estabelecimento" in i.mensagem
+
+
+def test_estadual_antiga_de_matriz_com_texto_abrangencia_continua_amarelo():
+    c = contrato(uf="MG", exigidas=[T.ESTADUAL])
+    c.cnpj = FILIAL
+    e = cert(T.ESTADUAL, uf="MG", orgao_emissor="SEFAZ-MG", texto="matriz e filiais")
+    assert validar(c, [e], hoje=HOJE).itens[0].semaforo == Semaforo.AMARELO
+
+
+def test_sp_unica_pdf_ponta_a_ponta(tmp_path):
+    g = _amostras_tmp(tmp_path)
+    from certidoes.extrator import ler_pdf
+    c = Contrato(numero="1/2026", cnpj=g.CNPJ_EMPRESA, razao_social="X", uf_sede="SP",
+                 municipio_sede="São Paulo", exigidas=[T.ESTADUAL])
+    hoje = date.today()
+    u = ler_pdf(tmp_path / "estadual_sp_unica.pdf")
+    res = validar(c, [u], hoje=hoje)
+    assert res.itens[0].semaforo == Semaforo.VERDE, res.itens[0].mensagem
+    assert MSG_UNICA in res.itens[0].mensagem
+    # única + PGE antiga (PDFs): verde, sem alerta de falta
+    res = validar(c, [ler_pdf(tmp_path / "estadual_sp_pge.pdf"), u], hoje=hoje)
+    assert res.itens[0].semaforo == Semaforo.VERDE and "falta uma" not in res.itens[0].mensagem
+    # só PGE (PDF): vermelho como antes
+    res = validar(c, [ler_pdf(tmp_path / "estadual_sp_pge.pdf")], hoje=hoje)
+    assert res.itens[0].semaforo == Semaforo.VERMELHO and "falta uma" in res.itens[0].mensagem
+    # a mesma única, lida 100 dias depois: vencida
+    res = validar(c, [u], hoje=hoje + timedelta(days=100))
+    assert res.itens[0].semaforo == Semaforo.VERMELHO

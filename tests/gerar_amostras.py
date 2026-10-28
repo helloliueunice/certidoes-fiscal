@@ -335,6 +335,36 @@ def amostras(hoje: Optional[date] = None) -> list[Amostra]:
             "Código de autenticidade: RJ-7788-9900",
         ]]))
 
+    # Certidão Única estadual de SP (SIDEB: Sefaz + PGE). Redação SINTÉTICA, montada com as
+    # expressões divulgadas (inscritos e não inscritos, raiz do CNPJ, 90/180 dias); o modelo
+    # oficial ainda não foi confirmado.
+    val_u = em + timedelta(days=90)
+    lista.append(Amostra(
+        "estadual_sp_unica", "estadual", "negativa", CNPJ_EMPRESA, val_u, data_emissao=em, uf="SP",
+        codigo_controle="SIDEB2026A1B2C3",
+        descricao="SP Certidão Única (SIDEB, Sefaz + PGE), validade 90 dias da emissão",
+        paginas=[[
+            "GOVERNO DO ESTADO DE SÃO PAULO",
+            "SECRETARIA DA FAZENDA E PLANEJAMENTO - PROCURADORIA GERAL DO ESTADO",
+            "SIDEB",
+            "# CERTIDÃO NEGATIVA DE DÉBITOS TRIBUTÁRIOS - CERTIDÃO ÚNICA",
+            f"CNPJ: {fmt_cnpj(CNPJ_EMPRESA)}",
+            f"Nome: {EMPRESA}",
+            "Certidão emitida conjuntamente pela Secretaria da Fazenda e Planejamento e pela "
+            "Procuradoria Geral do Estado, abrangendo os débitos tributários inscritos e não "
+            "inscritos em dívida ativa.",
+            "Ressalvado o direito de a Fazenda do Estado de São Paulo cobrar quaisquer débitos que "
+            "vierem a ser apurados, certifica-se que não constam débitos de responsabilidade do "
+            "interessado acima identificado.",
+            "A certidão abrange todos os estabelecimentos da empresa (raiz do CNPJ).",
+            f"Data de emissão: {br(em)} 09:30:12",
+            "Esta certidão é válida por 90 (noventa) dias, contados da data de sua emissão "
+            "(180 dias para contribuintes do Cadastro Fiscal Positivo).",
+            "Código de autenticidade: SIDEB2026A1B2C3",
+            "A autenticidade desta certidão deverá ser confirmada em "
+            "https://www4.fazenda.sp.gov.br/SIDEB/CertidaoNegativaDebitos",
+        ]]))
+
     lista.append(Amostra(
         "municipal_sp", "municipal", "negativa", CNPJ_EMPRESA, val180, data_emissao=em,
         uf="SP", municipio="São Paulo", descricao="Prefeitura de SP, validade por prazo",

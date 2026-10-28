@@ -83,3 +83,59 @@ def test_planejar_mes_erros():
 def test_portais_com_sicaf_em_destaque():
     lista = json.loads(navegador.portais("SP", "São Paulo", json.dumps(["federal", "sicaf"]), True))
     assert lista and lista[0]["tipo"] == "sicaf" and lista[0]["destaque"]
+
+
+# ---------------------------------------------------------------- selos de acesso (esquema v2)
+
+def test_portais_campos_de_acesso_catalogo_real():
+    r = json.loads(navegador.portais("SP", "São Paulo", "[]"))
+    assert r
+    for p in r:
+        for campo in ("acesso", "rotulo_acesso", "nivel_govbr", "validade_tipica_dias", "certidao_unica"):
+            assert campo in p
+        assert p["acesso"] in ("captcha", "govbr", "certificado", "livre", "desconhecido")
+
+
+def test_portais_ordem_sem_captcha_primeiro(monkeypatch):
+    from certidoes import portais
+    itens = [
+        {"id": "a", "nome": "Com captcha", "tipo": "federal", "url": "https://a", "captcha": True},
+        {"id": "b", "nome": "Gov.br", "tipo": "federal", "url": "https://b", "acesso": "govbr",
+         "captcha": False, "nivel_govbr": "ouro", "validade_tipica_dias": 180, "prioridade": 1},
+        {"id": "c", "nome": "Antigo", "tipo": "fgts", "url": "https://c", "captcha": None},
+        {"id": "d", "nome": "SICAF", "tipo": "sicaf", "url": "https://d", "acesso": "govbr"},
+        {"id": "e", "nome": "SEFAZ", "tipo": "estadual", "url": "https://e", "acesso": "certificado",
+         "certidao_unica": True},
+    ]
+    monkeypatch.setattr(portais, "portais_para", lambda uf, mun, caminho=None: [dict(p) for p in itens])
+    r = json.loads(navegador.portais("SP", "São Paulo", "[]", True))
+    assert [p["nome"] for p in r] == ["SICAF", "Gov.br", "Com captcha", "Antigo", "SEFAZ"]
+    gov = r[1]
+    assert gov["acesso"] == "govbr" and gov["nivel_govbr"] == "ouro" and gov["validade_tipica_dias"] == 180
+    assert gov["rotulo_acesso"] == "login gov.br (sem captcha), nível ouro"
+    assert r[2]["acesso"] == "captcha" and r[3]["acesso"] == "desconhecido"
+    assert r[3]["rotulo_acesso"] == "acesso a confirmar" and r[4]["certidao_unica"] is True
+
+
+def test_conferir_sugere_melhor_rota():
+    r = _conferir(arquivos=_arq("fgts_regular"))
+    assert r["ok"] and r["aviso_rotas"].startswith("Prefira as rotas sem captcha")
+    tipos = {x["tipo"] for x in r["rotas"]}
+    assert "federal" in tipos and "fgts" not in tipos
+    fed = next(i for i in r["itens"] if i["tipo"] == "federal")
+    assert fed["melhor_rota"]["texto"].startswith("Melhor rota: ")
+    json.dumps(r)   # serializável
+
+
+def test_planejar_mes_totais_novos():
+    csv_txt = ("data_referencia;competencia;contrato;cnpj;razao_social;fiscal;item;semaforo;resultado;"
+               "situacao;validade;codigo_controle;arquivo;mensagem;apto_atesto\r\n"
+               "01/09/2026;08/2026;1/2026;11.222.333/0001-81;ALFA;F;FGTS (CRF - Caixa);verde;OK;Regular;"
+               "05/09/2026;;f.pdf;ok;sim\r\n")
+    r = json.loads(navegador.planejar_mes(json.dumps({"csvs": [csv_txt], "ate": "2026-11-10",
+                                                     "hoje": "2026-10-27"})))
+    assert r["ok"]
+    for k in ("captchas_a_resolver", "sem_captcha_govbr", "acesso_a_confirmar", "captchas_evitados"):
+        assert k in r["totais"]
+    item = r["grupos"][0]["itens"][0]
+    assert "rota_sem_captcha" in item and all("rotulo_acesso" in p for p in item["portais"])
