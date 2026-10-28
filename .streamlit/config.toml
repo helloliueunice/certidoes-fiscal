@@ -1,13 +1,51 @@
+# Tema no padrão gov.br DS (Padrão Digital de Governo): cores, tipografia Rawline e botões em pílula.
 [theme]
 base = "light"
-primaryColor = "#1F4E79"
+primaryColor = "#1351B4"
 backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F2F5F9"
-textColor = "#1A1A1A"
-font = "sans serif"
+secondaryBackgroundColor = "#F8F8F8"
+textColor = "#333333"
+linkColor = "#1351B4"
+borderColor = "#CCCCCC"
+baseRadius = "6px"
+buttonRadius = "full"
+font = "Rawline, Raleway, sans-serif"
+headingFontWeights = [500, 600, 600, 600, 600, 600]
+
+[[theme.fontFaces]]
+family = "Rawline"
+url = "app/static/rawline/rawline-latin-300-normal.woff2"
+weight = 300
+
+[[theme.fontFaces]]
+family = "Rawline"
+url = "app/static/rawline/rawline-latin-400-normal.woff2"
+weight = 400
+
+[[theme.fontFaces]]
+family = "Rawline"
+url = "app/static/rawline/rawline-latin-400-italic.woff2"
+weight = 400
+style = "italic"
+
+[[theme.fontFaces]]
+family = "Rawline"
+url = "app/static/rawline/rawline-latin-500-normal.woff2"
+weight = 500
+
+[[theme.fontFaces]]
+family = "Rawline"
+url = "app/static/rawline/rawline-latin-600-normal.woff2"
+weight = 600
+
+[[theme.fontFaces]]
+family = "Rawline"
+url = "app/static/rawline/rawline-latin-700-normal.woff2"
+weight = 700
 
 [server]
 maxUploadSize = 50
+enableStaticServing = true
 
 [browser]
 gatherUsageStats = false

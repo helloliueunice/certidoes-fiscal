@@ -32,7 +32,7 @@ certidoes/
   navegador.py  ponte JSON para a versão no navegador (sem reportlab, sem rede)
 web/            interface web no padrão gov.br DS (FastAPI) — deploy no Railway
 site/           versão estática no navegador (Pyodide + pdf.js), gov.br DS; `python site/build.py`
-app.py          interface Streamlit (legada)
+app.py          interface Streamlit (tema gov.br DS, Rawline em static/; publicada no Streamlit Cloud)
 tests/          testes com PDFs sintéticos marcados "DOCUMENTO DE TESTE"
 docs/           roteiros e minutas (cláusula contratual, ofício, adesão Conecta)
 ```
